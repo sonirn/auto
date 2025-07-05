@@ -200,7 +200,7 @@ Return your analysis in JSON format."""
                 
                 response = await asyncio.to_thread(
                     litellm.completion,
-                    model="groq/llama-3-8b-8192",  # Use Groq instead of Gemini due to rate limits
+                    model="groq/llama3-8b-8192",  # Use Groq instead of Gemini due to rate limits
                     messages=messages,
                     api_key=os.environ['GROQ_API_KEY']  # Use Groq API key
                 )
