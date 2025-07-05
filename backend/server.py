@@ -126,7 +126,7 @@ def initialize_cloud_storage():
         cloud_storage_service = FallbackCloudStorageService()
 
 # Initialize cloud storage
-initialize_cloud_storage()
+# initialize_cloud_storage()  # Remove this line since it will be called on startup
 
 # Import our AI Video Editor
 # from ai_video_editor import ai_video_editor  # TODO: Implement this module later
