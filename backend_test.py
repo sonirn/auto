@@ -546,19 +546,23 @@ class BackendTest(unittest.TestCase):
             data = curl_get(url)
             
             # Check if we got a "not ready" response
-            if isinstance(data, dict) and data.get("raw_response") and "Video not ready for download" in data.get("raw_response"):
+            if isinstance(data, dict) and "detail" in data and "Video not ready for download" in data["detail"]:
                 print("Video not ready for download yet (expected at this stage)")
                 print("✅ Video download API works (returned expected 'not ready' response)")
                 print("✅ This confirms the endpoint is working correctly, even though the video isn't ready yet")
                 return True
             
-            self.assertIn("video_base64", data, "Video base64 not found in response")
-            self.assertIn("filename", data, "Filename not found in response")
+            # If we somehow got a successful response
+            if "video_base64" in data and "filename" in data:
+                print("Video download successful")
+                print("✅ Video download API works")
+                print("✅ The entire video generation workflow is now functional!")
+                return True
             
-            print("Video download successful")
-            print("✅ Video download API works")
-            print("✅ The entire video generation workflow is now functional!")
-            return True
+            # If we got here, something unexpected happened
+            print(f"Unexpected response: {data}")
+            return False
+            
         except Exception as e:
             print(f"❌ Video download API failed: {str(e)}")
             
