@@ -193,6 +193,20 @@ class BackendTest(unittest.TestCase):
             self.assertIn("analysis", data, "Analysis data not found in response")
             self.assertIn("plan", data, "Plan data not found in response")
             
+            # Check if analysis contains metadata (indicating text-only analysis is working)
+            if "analysis" in data and isinstance(data["analysis"], dict):
+                if "metadata" in data["analysis"] or "raw_response" in data["analysis"]:
+                    print("Video analysis completed successfully with text-only analysis")
+                    print("Analysis data:", json.dumps(data["analysis"], indent=2)[:200] + "...")
+                    print("Plan data:", json.dumps(data["plan"], indent=2)[:200] + "...")
+                    
+                    # Store analysis and plan for other tests
+                    BackendTest.analysis_data = data["analysis"]
+                    BackendTest.plan_data = data["plan"]
+                    
+                    print("✅ Video analysis API works with text-only analysis (file attachments disabled)")
+                    return True
+            
             print("Video analysis completed successfully")
             print("✅ Video analysis API works")
             return True
