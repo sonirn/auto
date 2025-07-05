@@ -868,13 +868,13 @@ async def upload_audio(project_id: str, file: UploadFile = File(...), user_id: s
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.post("/projects/{project_id}/analyze")
-async def analyze_video(project_id: str):
+async def analyze_video(project_id: str, user_id: str = Depends(require_auth)):
     """Analyze uploaded video and generate plan"""
     try:
-        # Get project
-        project_doc = await db.video_projects.find_one({"id": project_id})
+        # Get project and verify ownership
+        project_doc = await db.video_projects.find_one({"id": project_id, "user_id": user_id})
         if not project_doc:
-            raise HTTPException(status_code=404, detail="Project not found")
+            raise HTTPException(status_code=404, detail="Project not found or access denied")
         
         project = VideoProject(**project_doc)
         
