@@ -47,24 +47,61 @@ SAMPLE_AUDIO_PATH = "/app/backend/sample_audio.mp3"
 def create_sample_files():
     # Create a simple video file
     if not os.path.exists(SAMPLE_VIDEO_PATH):
-        # Create a dummy video file
-        with open(SAMPLE_VIDEO_PATH, 'wb') as f:
-            f.write(b'DUMMY VIDEO CONTENT')
-        print(f"Created dummy video file at {SAMPLE_VIDEO_PATH}")
+        try:
+            # Try to create a more realistic video file using ffmpeg
+            print("Creating a realistic sample video file using ffmpeg...")
+            cmd = [
+                "ffmpeg", "-y", "-f", "lavfi", "-i", "testsrc=duration=5:size=640x360:rate=30", 
+                "-c:v", "libx264", "-pix_fmt", "yuv420p", SAMPLE_VIDEO_PATH
+            ]
+            subprocess.run(cmd, check=True, capture_output=True)
+            print(f"Created sample video file at {SAMPLE_VIDEO_PATH}")
+        except Exception as e:
+            print(f"Failed to create video with ffmpeg: {str(e)}")
+            # Fallback to creating a dummy file
+            with open(SAMPLE_VIDEO_PATH, 'wb') as f:
+                f.write(b'DUMMY VIDEO CONTENT')
+            print(f"Created dummy video file at {SAMPLE_VIDEO_PATH}")
     
     # Create a simple image file
     if not os.path.exists(SAMPLE_IMAGE_PATH):
-        # Create a dummy image file
-        with open(SAMPLE_IMAGE_PATH, 'wb') as f:
-            f.write(b'DUMMY IMAGE CONTENT')
-        print(f"Created dummy image file at {SAMPLE_IMAGE_PATH}")
+        try:
+            # Try to create a more realistic image file using convert
+            print("Creating a realistic sample image file...")
+            cmd = [
+                "convert", "-size", "320x240", "xc:blue", SAMPLE_IMAGE_PATH
+            ]
+            subprocess.run(cmd, check=True, capture_output=True)
+            print(f"Created sample image file at {SAMPLE_IMAGE_PATH}")
+        except Exception as e:
+            print(f"Failed to create image with convert: {str(e)}")
+            # Fallback to creating a dummy file
+            with open(SAMPLE_IMAGE_PATH, 'wb') as f:
+                f.write(b'DUMMY IMAGE CONTENT')
+            print(f"Created dummy image file at {SAMPLE_IMAGE_PATH}")
     
     # Create a simple audio file
     if not os.path.exists(SAMPLE_AUDIO_PATH):
-        # Create a dummy audio file
-        with open(SAMPLE_AUDIO_PATH, 'wb') as f:
-            f.write(b'DUMMY AUDIO CONTENT')
-        print(f"Created dummy audio file at {SAMPLE_AUDIO_PATH}")
+        try:
+            # Try to create a more realistic audio file using ffmpeg
+            print("Creating a realistic sample audio file using ffmpeg...")
+            cmd = [
+                "ffmpeg", "-y", "-f", "lavfi", "-i", "sine=frequency=440:duration=5", 
+                "-c:a", "libmp3lame", SAMPLE_AUDIO_PATH
+            ]
+            subprocess.run(cmd, check=True, capture_output=True)
+            print(f"Created sample audio file at {SAMPLE_AUDIO_PATH}")
+        except Exception as e:
+            print(f"Failed to create audio with ffmpeg: {str(e)}")
+            # Fallback to creating a dummy file
+            with open(SAMPLE_AUDIO_PATH, 'wb') as f:
+                f.write(b'DUMMY AUDIO CONTENT')
+            print(f"Created dummy audio file at {SAMPLE_AUDIO_PATH}")
+            
+    # Make sure the parent directories exist
+    os.makedirs(os.path.dirname(SAMPLE_VIDEO_PATH), exist_ok=True)
+    os.makedirs(os.path.dirname(SAMPLE_IMAGE_PATH), exist_ok=True)
+    os.makedirs(os.path.dirname(SAMPLE_AUDIO_PATH), exist_ok=True)
 
 # Use curl for API requests
 def curl_post(url, json_data=None, files=None, params=None):
