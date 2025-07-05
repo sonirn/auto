@@ -102,27 +102,10 @@ def create_sample_files():
     
     # Create a simple audio file
     if not os.path.exists(SAMPLE_AUDIO_PATH):
-        try:
-            import numpy as np
-            from scipy.io import wavfile
-            
-            # Create a simple sine wave
-            sample_rate = 44100
-            duration = 3  # seconds
-            t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
-            
-            # Generate a 440 Hz sine wave
-            audio_data = np.sin(2 * np.pi * 440 * t) * 32767
-            audio_data = audio_data.astype(np.int16)
-            
-            # Save as WAV
-            wavfile.write(SAMPLE_AUDIO_PATH, sample_rate, audio_data)
-            print(f"Created sample audio at {SAMPLE_AUDIO_PATH}")
-        except Exception as e:
-            print(f"Error creating sample audio: {e}")
-            # Create an empty file as fallback
-            with open(SAMPLE_AUDIO_PATH, 'wb') as f:
-                f.write(b'DUMMY AUDIO CONTENT')
+        # Create a dummy audio file
+        with open(SAMPLE_AUDIO_PATH, 'wb') as f:
+            f.write(b'DUMMY AUDIO CONTENT')
+        print(f"Created dummy audio file at {SAMPLE_AUDIO_PATH}")
 
 class VideoModel(str, Enum):
     RUNWAYML_GEN4 = "runwayml_gen4"
