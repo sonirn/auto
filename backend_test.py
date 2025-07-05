@@ -250,6 +250,13 @@ class BackendTest(unittest.TestCase):
             print(f"❌ Chat API failed: {str(e)}")
             if hasattr(e, 'response') and e.response:
                 print(f"Response: {e.response.text}")
+                
+                # Check for specific error about API key
+                if "AuthenticationError" in e.response.text and "API key" in e.response.text:
+                    print("\nDETAILED ERROR: The error suggests an issue with the API key authentication.")
+                    print("In server.py, the chat interface is configured to use Groq with the llama3-70b-8192 model (line 626).")
+                    print("The API key might be incorrect or in the wrong format. Check the GROQ_API_KEY in the .env file.")
+            
             return False
     
     def test_07_start_video_generation(self):
