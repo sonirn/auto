@@ -156,27 +156,14 @@ Return your analysis in JSON format."""
             # Extract video metadata
             video_metadata = await self._extract_video_metadata(video_path)
             
-            # Create file content for analysis
-            video_file = FileContentWithMimeType(
-                file_path=video_path,
-                mime_type="video/mp4"
-            )
+            # For now, let's test without file attachments to isolate the issue
+            # TODO: Re-enable file attachments once provider issue is resolved
             
-            file_contents = [video_file]
-            
-            # Add character image if provided
-            if character_image_path:
-                image_file = FileContentWithMimeType(
-                    file_path=character_image_path,
-                    mime_type="image/jpeg"
-                )
-                file_contents.append(image_file)
-            
-            # Create analysis prompt
+            # Create analysis prompt without file attachments
             analysis_prompt = f"""
-            Please analyze this video sample in extreme detail. Video metadata: {video_metadata}
+            Please analyze this video based on the metadata provided: {video_metadata}
             
-            Provide a comprehensive analysis including:
+            Since I cannot attach the actual video file, please provide a comprehensive analysis structure including:
             1. Visual elements (scenes, objects, characters, lighting, colors, camera work)
             2. Audio elements (music, sound effects, voice, audio quality)
             3. Style and mood (genre, pacing, transitions, effects)
@@ -197,10 +184,7 @@ Return your analysis in JSON format."""
             """
             
             # Send to LLM for analysis
-            user_message = UserMessage(
-                text=analysis_prompt,
-                file_contents=file_contents
-            )
+            user_message = UserMessage(text=analysis_prompt)
             
             response = await self.llm_chat.send_message(user_message)
             
@@ -213,11 +197,13 @@ Return your analysis in JSON format."""
                 return {
                     "analysis": {
                         "raw_response": response,
-                        "metadata": video_metadata
+                        "metadata": video_metadata,
+                        "note": "File attachments temporarily disabled - analysis based on metadata only"
                     },
                     "plan": {
                         "description": "Plan extracted from analysis",
-                        "recommended_model": "runwayml_gen4"
+                        "recommended_model": "runwayml_gen4",
+                        "note": "This is a basic plan - will be enhanced once file analysis is working"
                     }
                 }
             
