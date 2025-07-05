@@ -201,6 +201,9 @@ class BackendTest(unittest.TestCase):
         # Create a real sample video file using curl
         project_id = BackendTest.project_id
         
+        # Create sample files if they don't exist
+        create_sample_files()
+        
         # Use curl to upload the file
         cmd = [
             "curl", "-s", "-X", "POST", 
