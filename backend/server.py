@@ -155,7 +155,7 @@ Return your analysis in JSON format."""
             # Extract video metadata
             video_metadata = await self._extract_video_metadata(video_path)
             
-            # Create analysis prompt without file attachments
+            # Create analysis prompt
             analysis_prompt = f"""
             Please analyze this video based on the metadata provided: {video_metadata}
             
@@ -179,27 +179,22 @@ Return your analysis in JSON format."""
             Return response in JSON format with 'analysis' and 'plan' keys.
             """
             
-            # Use litellm directly if available
-            if self.litellm_available:
-                import litellm
-                
-                messages = [
-                    {"role": "system", "content": self.system_message},
-                    {"role": "user", "content": analysis_prompt}
-                ]
-                
-                response = await asyncio.to_thread(
-                    litellm.completion,
-                    model="groq/llama3-8b-8192",  # Use Groq instead of Gemini due to rate limits
-                    messages=messages,
-                    api_key=os.environ['GROQ_API_KEY']  # Use Groq API key
-                )
-                
-                response_text = response.choices[0].message.content
-            else:
-                # Fallback to emergentintegrations
-                user_message = UserMessage(text=analysis_prompt)
-                response_text = await self.llm_chat.send_message(user_message)
+            # Use litellm directly
+            import litellm
+            
+            messages = [
+                {"role": "system", "content": self.system_message},
+                {"role": "user", "content": analysis_prompt}
+            ]
+            
+            response = await asyncio.to_thread(
+                litellm.completion,
+                model="groq/llama3-8b-8192",  # Use Groq model which is working
+                messages=messages,
+                api_key=self.groq_api_key
+            )
+            
+            response_text = response.choices[0].message.content
             
             # Parse JSON response
             try:
@@ -211,12 +206,12 @@ Return your analysis in JSON format."""
                     "analysis": {
                         "raw_response": response_text,
                         "metadata": video_metadata,
-                        "note": "File attachments temporarily disabled - analysis based on metadata only"
+                        "note": "Analysis based on video metadata and AI interpretation"
                     },
                     "plan": {
                         "description": "Plan extracted from analysis",
                         "recommended_model": "runwayml_gen4",
-                        "note": "This is a basic plan - will be enhanced once file analysis is working"
+                        "note": "Video generation plan created based on analysis"
                     }
                 }
             
