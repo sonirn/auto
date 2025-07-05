@@ -623,24 +623,44 @@ async def chat_with_plan(project_id: str, chat_request: ChatMessage):
         
         project = VideoProject(**project_doc)
         
-        # Create chat session for plan modification
-        chat = LlmChat(
-            api_key=os.environ['GROQ_API_KEY'],
-            session_id=f"plan_modification_{project_id}",
-            system_message=f"""You are helping to modify a video generation plan. 
-            Current plan: {json.dumps(project.generation_plan, indent=2)}
+        # Create system message for plan modification
+        system_message = f"""You are helping to modify a video generation plan. 
+        Current plan: {json.dumps(project.generation_plan, indent=2)}
+        
+        The user wants to make changes to this plan. Listen to their requests and provide an updated plan.
+        Always return your response in JSON format with 'response' and 'updated_plan' keys."""
+        
+        # Use litellm directly
+        try:
+            import litellm
             
-            The user wants to make changes to this plan. Listen to their requests and provide an updated plan.
-            Always return your response in JSON format with 'response' and 'updated_plan' keys."""
-        ).with_model(provider="groq", model="llama3-70b-8192")  # Correct format with explicit parameter names
-
-        # Send user message
-        user_message = UserMessage(text=chat_request.message)
-        response = await chat.send_message(user_message)
+            messages = [
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": chat_request.message}
+            ]
+            
+            response = await asyncio.to_thread(
+                litellm.completion,
+                model="groq/llama3-70b-8192",
+                messages=messages,
+                api_key=os.environ['GROQ_API_KEY']
+            )
+            
+            response_text = response.choices[0].message.content
+        except ImportError:
+            # Fallback to emergentintegrations
+            chat = LlmChat(
+                api_key=os.environ['GROQ_API_KEY'],
+                session_id=f"plan_modification_{project_id}",
+                system_message=system_message
+            ).with_model(provider="groq", model="llama3-70b-8192")
+            
+            user_message = UserMessage(text=chat_request.message)
+            response_text = await chat.send_message(user_message)
         
         try:
             # Parse JSON response
-            response_data = json.loads(response)
+            response_data = json.loads(response_text)
             
             # Update plan if provided
             if response_data.get("updated_plan"):
@@ -650,12 +670,12 @@ async def chat_with_plan(project_id: str, chat_request: ChatMessage):
                 )
             
             return ChatResponse(
-                response=response_data.get("response", response),
+                response=response_data.get("response", response_text),
                 updated_plan=response_data.get("updated_plan")
             )
             
         except json.JSONDecodeError:
-            return ChatResponse(response=response)
+            return ChatResponse(response=response_text)
         
     except Exception as e:
         logger.error(f"Error in chat: {str(e)}")
