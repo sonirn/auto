@@ -6,6 +6,8 @@ import logging
 from typing import Optional
 from datetime import datetime, timedelta
 import uuid
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -14,21 +16,50 @@ class CloudStorageService:
         self.account_id = os.environ['CLOUDFLARE_ACCOUNT_ID']
         self.bucket_name = os.environ.get('R2_BUCKET_NAME', 'video-generation-storage')
         
-        # For now, we'll use a fallback since we don't have the actual R2 keys
-        # This allows the app to continue working while we get proper credentials
+        # Use actual R2 credentials
         try:
             self.r2_client = boto3.client(
                 's3',
                 endpoint_url=f"https://{self.account_id}.r2.cloudflarestorage.com",
-                aws_access_key_id=os.environ.get('R2_ACCESS_KEY_ID', 'fallback'),
-                aws_secret_access_key=os.environ.get('R2_SECRET_ACCESS_KEY', 'fallback'),
+                aws_access_key_id=os.environ.get('R2_ACCESS_KEY_ID'),
+                aws_secret_access_key=os.environ.get('R2_SECRET_ACCESS_KEY'),
                 config=Config(signature_version='s3v4', region_name='auto')
             )
+            
+            # Test connection by listing buckets
+            self.r2_client.list_buckets()
             self.r2_available = True
+            logger.info("Successfully connected to Cloudflare R2")
+            
+            # Ensure bucket exists
+            self._ensure_bucket_exists()
+            
         except Exception as e:
-            logger.warning(f"R2 client initialization failed, using local storage fallback: {e}")
+            logger.error(f"R2 client initialization failed: {e}")
             self.r2_client = None
             self.r2_available = False
+        
+        # Thread pool for async operations
+        self.executor = ThreadPoolExecutor(max_workers=4)
+    
+    def _ensure_bucket_exists(self):
+        """Ensure the R2 bucket exists"""
+        try:
+            self.r2_client.head_bucket(Bucket=self.bucket_name)
+            logger.info(f"R2 bucket '{self.bucket_name}' exists")
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            if error_code == '404':
+                # Bucket doesn't exist, create it
+                try:
+                    self.r2_client.create_bucket(Bucket=self.bucket_name)
+                    logger.info(f"Created R2 bucket: {self.bucket_name}")
+                except ClientError as create_error:
+                    logger.error(f"Failed to create R2 bucket: {str(create_error)}")
+                    raise
+            else:
+                logger.error(f"Error checking R2 bucket: {str(e)}")
+                raise
     
     def generate_file_key(self, user_id: str, project_id: str, file_type: str, filename: str) -> str:
         """Generate a structured file key for R2 storage"""
@@ -57,23 +88,30 @@ class CloudStorageService:
             # Set lifecycle tags for 7-day retention
             tagging = "RetentionDays=7&AutoDelete=true"
             
-            self.r2_client.put_object(
-                Bucket=self.bucket_name,
-                Key=file_key,
-                Body=file_content,
-                ContentType=content_type,
-                Tagging=tagging,
-                Metadata={
-                    'user-id': user_id,
-                    'project-id': project_id,
-                    'file-type': file_type,
-                    'upload-date': datetime.utcnow().isoformat(),
-                    'expires-at': (datetime.utcnow() + timedelta(days=7)).isoformat()
-                }
-            )
+            # Use thread pool for upload
+            def _upload():
+                return self.r2_client.put_object(
+                    Bucket=self.bucket_name,
+                    Key=file_key,
+                    Body=file_content,
+                    ContentType=content_type,
+                    Tagging=tagging,
+                    Metadata={
+                        'user-id': user_id,
+                        'project-id': project_id,
+                        'file-type': file_type,
+                        'upload-date': datetime.utcnow().isoformat(),
+                        'expires-at': (datetime.utcnow() + timedelta(days=7)).isoformat()
+                    }
+                )
+            
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(self.executor, _upload)
             
             # Return the full R2 URL
-            return f"https://{self.account_id}.r2.cloudflarestorage.com/{self.bucket_name}/{file_key}"
+            r2_url = f"https://{self.account_id}.r2.cloudflarestorage.com/{self.bucket_name}/{file_key}"
+            logger.info(f"Successfully uploaded to R2: {r2_url}")
+            return r2_url
             
         except ClientError as e:
             logger.error(f"R2 upload failed: {e}")
@@ -101,6 +139,7 @@ class CloudStorageService:
         async with aiofiles.open(file_path, 'wb') as f:
             await f.write(file_content)
         
+        logger.info(f"File saved locally at {file_path}")
         return str(file_path)
     
     async def get_download_url(self, file_path: str, expires_in: int = 3600) -> str:
@@ -117,11 +156,15 @@ class CloudStorageService:
             # Extract key from R2 URL
             file_key = r2_url.split(f'{self.bucket_name}/')[-1]
             
-            presigned_url = self.r2_client.generate_presigned_url(
-                'get_object',
-                Params={'Bucket': self.bucket_name, 'Key': file_key},
-                ExpiresIn=expires_in
-            )
+            def _generate_presigned_url():
+                return self.r2_client.generate_presigned_url(
+                    'get_object',
+                    Params={'Bucket': self.bucket_name, 'Key': file_key},
+                    ExpiresIn=expires_in
+                )
+            
+            loop = asyncio.get_event_loop()
+            presigned_url = await loop.run_in_executor(self.executor, _generate_presigned_url)
             
             return presigned_url
             
@@ -141,11 +184,16 @@ class CloudStorageService:
         try:
             file_key = r2_url.split(f'{self.bucket_name}/')[-1]
             
-            self.r2_client.delete_object(
-                Bucket=self.bucket_name,
-                Key=file_key
-            )
+            def _delete():
+                self.r2_client.delete_object(
+                    Bucket=self.bucket_name,
+                    Key=file_key
+                )
             
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(self.executor, _delete)
+            
+            logger.info(f"Successfully deleted from R2: {r2_url}")
             return True
             
         except Exception as e:
@@ -181,6 +229,15 @@ class CloudStorageService:
                             logger.info(f"Deleted expired file: {file_path}")
                         except Exception as e:
                             logger.error(f"Failed to delete expired file {file_path}: {e}")
+    
+    def get_storage_info(self):
+        """Get storage service information"""
+        return {
+            'service': 'Cloudflare R2' if self.r2_available else 'Local Storage (Fallback)',
+            'bucket': self.bucket_name if self.r2_available else 'N/A',
+            'account_id': self.account_id,
+            'status': 'connected' if self.r2_available else 'fallback'
+        }
 
 # Global instance
 cloud_storage_service = CloudStorageService()
