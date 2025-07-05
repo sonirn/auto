@@ -27,6 +27,9 @@ from emergentintegrations.llm.chat import LlmChat, UserMessage, FileContentWithM
 import httpx
 from enum import Enum
 
+# Import our AI Video Editor
+from ai_video_editor import ai_video_editor
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
