@@ -540,17 +540,17 @@ const App = () => {
 
           {/* Generation/Completion Step */}
           {(currentStep === 'generating' || videoStatus.status === 'completed') && (
-            <div className="bg-gray-800 rounded-lg p-8 text-center">
+            <div className="bg-gray-800 rounded-lg p-6 md:p-8 text-center">
               {videoStatus.status === 'completed' ? (
                 <div>
-                  <h2 className="text-2xl font-bold text-white mb-4">🎉 Video Generated Successfully!</h2>
-                  <p className="text-gray-300 mb-6">
+                  <h2 className="text-xl md:text-2xl font-bold text-white mb-4">🎉 Video Generated Successfully!</h2>
+                  <p className="text-gray-300 mb-6 text-sm md:text-base">
                     Your AI-generated video is ready for download.
                   </p>
-                  <div className="flex gap-4 justify-center">
+                  <div className="flex flex-col md:flex-row gap-3 md:gap-4 justify-center">
                     <button
                       onClick={handleDownload}
-                      className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold"
+                      className="bg-green-600 text-white px-6 md:px-8 py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold text-sm md:text-base"
                     >
                       📥 Download Video
                     </button>
@@ -561,7 +561,7 @@ const App = () => {
                         setAnalysis(null);
                         setPlan(null);
                       }}
-                      className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                      className="bg-blue-600 text-white px-6 md:px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors text-sm md:text-base"
                     >
                       🔄 Create Another Video
                     </button>
@@ -569,15 +569,15 @@ const App = () => {
                 </div>
               ) : (
                 <div>
-                  <h2 className="text-2xl font-bold text-white mb-4">
+                  <h2 className="text-xl md:text-2xl font-bold text-white mb-4">
                     {videoStatus.status === 'generating' ? '🎬 Generating Your Video...' : '⚡ Processing...'}
                   </h2>
-                  <p className="text-gray-300 mb-6">
+                  <p className="text-gray-300 mb-6 text-sm md:text-base">
                     The AI is working hard to create your video. This process will continue even if you close this page.
                   </p>
                   <div className="animate-pulse">
-                    <div className="text-6xl mb-4">🤖</div>
-                    <p className="text-gray-400">
+                    <div className="text-4xl md:text-6xl mb-4">🤖</div>
+                    <p className="text-gray-400 text-sm md:text-base">
                       AI is creating magic... Please wait.
                     </p>
                   </div>
