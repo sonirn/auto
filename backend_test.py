@@ -284,6 +284,13 @@ class BackendTest(unittest.TestCase):
             print(f"❌ Video generation API failed: {str(e)}")
             if hasattr(e, 'response') and e.response:
                 print(f"Response: {e.response.text}")
+                
+                # Check for specific error about generation plan
+                if "No generation plan available" in e.response.text:
+                    print("\nDETAILED ERROR: The error indicates that no generation plan is available.")
+                    print("This is expected because the video analysis step failed, which is responsible for creating the generation plan.")
+                    print("Fix the video analysis issue first, then this endpoint should work correctly.")
+            
             return False
     
     def test_08_get_project_status(self):
