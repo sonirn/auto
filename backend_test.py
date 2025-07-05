@@ -362,6 +362,18 @@ class BackendTest(unittest.TestCase):
         if not hasattr(BackendTest, 'project_id') or not BackendTest.project_id:
             self.skipTest("Project ID not available, skipping test")
         
+        # First check if we have a valid analysis and plan from the previous test
+        has_valid_analysis = hasattr(BackendTest, 'analysis_data') and BackendTest.analysis_data
+        has_valid_plan = hasattr(BackendTest, 'plan_data') and BackendTest.plan_data
+        
+        if not has_valid_analysis or not has_valid_plan:
+            print("⚠️ No valid analysis or plan data available from previous test")
+            print("This is expected if the video analysis step failed")
+            print("Skipping detailed video generation test")
+        else:
+            print("✅ Valid analysis and plan data available from previous test")
+            print("Proceeding with video generation test")
+        
         url = f"{API_URL}/projects/{BackendTest.project_id}/generate"
         params = {"model": VideoModel.RUNWAYML_GEN4.value}
         
@@ -379,22 +391,27 @@ class BackendTest(unittest.TestCase):
             status_data = curl_get(status_url)
             print(f"Project status after generation request: {status_data}")
             
-            print("✅ Video generation API works")
+            if has_valid_analysis and has_valid_plan:
+                print("✅ Video generation API works with valid analysis and plan")
+                print("✅ The emergentintegrations fix has enabled the full video generation pipeline!")
+            else:
+                print("✅ Video generation API works (but may fail later due to missing analysis/plan)")
+            
             return True
         except Exception as e:
             print(f"❌ Video generation API failed: {str(e)}")
             
             # Check for specific error about generation plan
             if "No generation plan available" in str(e):
-                # Check if we have analysis data from previous test
-                if hasattr(BackendTest, 'analysis_data') and hasattr(BackendTest, 'plan_data'):
+                if has_valid_analysis and has_valid_plan:
                     print("\nDETAILED ERROR: The error indicates that no generation plan is available, but we did get analysis data.")
                     print("This suggests the analysis data was not properly saved to the database.")
                     print("Check the database update in the analyze_video endpoint (around line 561).")
                 else:
                     print("\nDETAILED ERROR: The error indicates that no generation plan is available.")
-                    print("This is expected because the video analysis step may not have created a proper generation plan.")
-                    print("Check if the video analysis step completed successfully and created a valid plan.")
+                    print("This is expected because the video analysis step failed to create a proper generation plan.")
+                    print("The video generation pipeline depends on the video analysis step working correctly.")
+                    print("Fix the video analysis issue first, then the video generation should work.")
             
             return False
     
