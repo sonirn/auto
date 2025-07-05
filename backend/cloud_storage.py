@@ -11,18 +11,42 @@ from concurrent.futures import ThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
 
+import boto3
+from botocore.client import Config
+from botocore.exceptions import ClientError
+import os
+import logging
+from typing import Optional
+from datetime import datetime, timedelta
+import uuid
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
+logger = logging.getLogger(__name__)
+
 class CloudStorageService:
     def __init__(self):
-        self.account_id = os.environ['CLOUDFLARE_ACCOUNT_ID']
+        # Load environment variables with fallbacks
+        self.account_id = os.environ.get('CLOUDFLARE_ACCOUNT_ID')
         self.bucket_name = os.environ.get('R2_BUCKET_NAME', 'video-generation-storage')
+        self.access_key_id = os.environ.get('R2_ACCESS_KEY_ID')
+        self.secret_access_key = os.environ.get('R2_SECRET_ACCESS_KEY')
+        
+        # Only initialize R2 if all credentials are available
+        if not all([self.account_id, self.access_key_id, self.secret_access_key]):
+            logger.warning("Missing R2 credentials, R2 will not be available")
+            self.r2_client = None
+            self.r2_available = False
+            self.executor = None
+            return
         
         # Use actual R2 credentials
         try:
             self.r2_client = boto3.client(
                 's3',
                 endpoint_url=f"https://{self.account_id}.r2.cloudflarestorage.com",
-                aws_access_key_id=os.environ.get('R2_ACCESS_KEY_ID'),
-                aws_secret_access_key=os.environ.get('R2_SECRET_ACCESS_KEY'),
+                aws_access_key_id=self.access_key_id,
+                aws_secret_access_key=self.secret_access_key,
                 config=Config(signature_version='s3v4', region_name='auto')
             )
             
@@ -40,7 +64,7 @@ class CloudStorageService:
             self.r2_available = False
         
         # Thread pool for async operations
-        self.executor = ThreadPoolExecutor(max_workers=4)
+        self.executor = ThreadPoolExecutor(max_workers=4) if self.r2_available else None
     
     def _ensure_bucket_exists(self):
         """Ensure the R2 bucket exists"""
