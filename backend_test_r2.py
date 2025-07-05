@@ -10,18 +10,8 @@ from pathlib import Path
 
 # Get the backend URL from the frontend .env file
 def get_backend_url():
-    # Read the frontend .env file to get the backend URL
-    try:
-        with open('/app/frontend/.env', 'r') as f:
-            for line in f:
-                if line.startswith('REACT_APP_BACKEND_URL='):
-                    backend_url = line.strip().split('=', 1)[1].strip('"\'')
-                    return f"{backend_url}"
-        # Fallback to local URL if not found
-        return "http://0.0.0.0:8001"
-    except Exception as e:
-        print(f"Error reading backend URL: {str(e)}")
-        return "http://0.0.0.0:8001"
+    # Use local URL for testing
+    return "http://0.0.0.0:8001"
 
 BACKEND_URL = get_backend_url()
 if not BACKEND_URL:
