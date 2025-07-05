@@ -1123,6 +1123,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.on_event("startup")
+async def startup_event():
+    """Initialize services on startup"""
+    initialize_cloud_storage()
+
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
