@@ -467,22 +467,22 @@ const App = () => {
 
           {/* Planning Step */}
           {currentStep === 'planning' && plan && (
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
               {/* Analysis Results */}
-              <div className="bg-gray-800 rounded-lg p-6">
-                <h2 className="text-2xl font-bold text-white mb-4">📊 Video Analysis</h2>
-                <div className="bg-gray-900 rounded-lg p-4">
-                  <pre className="text-gray-300 text-sm overflow-x-auto">
+              <div className="bg-gray-800 rounded-lg p-4 md:p-6">
+                <h2 className="text-xl md:text-2xl font-bold text-white mb-4">📊 Video Analysis</h2>
+                <div className="bg-gray-900 rounded-lg p-3 md:p-4">
+                  <pre className="text-gray-300 text-xs md:text-sm overflow-x-auto">
                     {JSON.stringify(analysis, null, 2)}
                   </pre>
                 </div>
               </div>
 
               {/* Generation Plan */}
-              <div className="bg-gray-800 rounded-lg p-6">
-                <h2 className="text-2xl font-bold text-white mb-4">🎯 Generation Plan</h2>
-                <div className="bg-gray-900 rounded-lg p-4">
-                  <pre className="text-gray-300 text-sm overflow-x-auto">
+              <div className="bg-gray-800 rounded-lg p-4 md:p-6">
+                <h2 className="text-xl md:text-2xl font-bold text-white mb-4">🎯 Generation Plan</h2>
+                <div className="bg-gray-900 rounded-lg p-3 md:p-4">
+                  <pre className="text-gray-300 text-xs md:text-sm overflow-x-auto">
                     {JSON.stringify(plan, null, 2)}
                   </pre>
                 </div>
@@ -495,9 +495,9 @@ const App = () => {
               />
 
               {/* Model Selection */}
-              <div className="bg-gray-800 rounded-lg p-6">
-                <h3 className="text-xl font-semibold text-white mb-4">🤖 Select AI Model</h3>
-                <div className="grid grid-cols-2 gap-4">
+              <div className="bg-gray-800 rounded-lg p-4 md:p-6">
+                <h3 className="text-lg md:text-xl font-semibold text-white mb-4">🤖 Select AI Model</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                   {[
                     { value: 'runwayml_gen4', label: 'RunwayML Gen 4 Turbo', desc: 'Latest, fastest generation' },
                     { value: 'runwayml_gen3', label: 'RunwayML Gen 3 Alpha', desc: 'Stable, reliable' },
@@ -507,30 +507,30 @@ const App = () => {
                     <div
                       key={model.value}
                       onClick={() => setSelectedModel(model.value)}
-                      className={`p-4 rounded-lg cursor-pointer transition-colors ${
+                      className={`p-3 md:p-4 rounded-lg cursor-pointer transition-colors ${
                         selectedModel === model.value
                           ? 'bg-blue-600 text-white'
                           : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                       } ${model.value.includes('google') ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                      <h4 className="font-semibold">{model.label}</h4>
-                      <p className="text-sm opacity-80">{model.desc}</p>
+                      <h4 className="font-semibold text-sm md:text-base">{model.label}</h4>
+                      <p className="text-xs md:text-sm opacity-80">{model.desc}</p>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex flex-col md:flex-row gap-3 md:gap-4">
                 <button
                   onClick={() => setCurrentStep('upload')}
-                  className="flex-1 bg-gray-600 text-white py-3 rounded-lg hover:bg-gray-700 transition-colors"
+                  className="flex-1 bg-gray-600 text-white py-3 rounded-lg hover:bg-gray-700 transition-colors text-sm md:text-base"
                 >
                   Back to Upload
                 </button>
                 <button
                   onClick={handleGenerate}
                   disabled={selectedModel.includes('google')}
-                  className="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
+                  className="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold text-sm md:text-base"
                 >
                   🎬 Generate Video
                 </button>
