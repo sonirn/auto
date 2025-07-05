@@ -121,26 +121,70 @@
 .status-completed { background-color: #10b981; }
 .status-failed { background-color: #ef4444; }
 
-/* Responsive design */
+/* Responsive design improvements */
 @media (max-width: 768px) {
   .container {
     padding: 0 16px;
   }
   
+  /* Hide desktop progress indicators on mobile */
   .step-indicator {
     display: none;
   }
   
+  /* Single column on mobile */
   .grid-cols-2 {
     grid-template-columns: 1fr;
   }
   
+  /* Stack flex items on mobile */
   .flex-gap-4 {
     flex-direction: column;
   }
   
   .flex-gap-4 > * {
     margin-bottom: 12px;
+  }
+
+  /* Mobile file upload optimizations */
+  .border-dashed {
+    min-height: 120px;
+  }
+
+  /* Mobile chat improvements */
+  .chat-mobile {
+    height: 200px;
+  }
+
+  /* Text size adjustments */
+  .mobile-text-lg {
+    font-size: 1.125rem;
+  }
+
+  .mobile-text-base {
+    font-size: 1rem;
+  }
+
+  .mobile-text-sm {
+    font-size: 0.875rem;
+  }
+
+  /* Button improvements */
+  .mobile-btn {
+    min-height: 48px;
+    font-size: 0.875rem;
+  }
+
+  /* Progress step mobile layout */
+  .mobile-progress {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .mobile-progress::-webkit-scrollbar {
+    display: none;
   }
 }
 
