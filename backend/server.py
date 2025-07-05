@@ -129,7 +129,7 @@ class CropRequest(BaseModel):
 class VideoAnalysisService:
     def __init__(self):
         self.llm_chat = LlmChat(
-            api_key=os.environ['XAI_API_KEY'],
+            api_key=os.environ['GEMINI_API_KEY'],
             session_id="video_analysis",
             system_message="""You are an expert video analysis AI. Your task is to analyze sample videos in extreme detail and create comprehensive plans for generating similar videos.
 
@@ -149,7 +149,7 @@ Then create a detailed generation plan with:
 6. Recommended AI model for generation
 
 Return your analysis in JSON format."""
-        ).with_model("openai", "gpt-4o")  # Using OpenAI model via emergentintegrations
+        ).with_model("google", "gemini-pro-vision")  # Using Gemini for file analysis
     
     async def analyze_video(self, video_path: str, character_image_path: Optional[str] = None, audio_path: Optional[str] = None) -> Dict[str, Any]:
         try:
