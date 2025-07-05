@@ -48,52 +48,65 @@ except ImportError:
     def require_auth() -> str:
         """Fallback: return a default user ID when auth is not available"""
         return "default_user"
+
+# Load cloud storage after environment variables are set
+CLOUD_STORAGE_AVAILABLE = False
+cloud_storage_service = None
+
+def initialize_cloud_storage():
+    """Initialize cloud storage service"""
+    global CLOUD_STORAGE_AVAILABLE, cloud_storage_service
     
-try:
-    from cloud_storage import cloud_storage_service
-    CLOUD_STORAGE_AVAILABLE = True
-except ImportError:
-    CLOUD_STORAGE_AVAILABLE = False
-    logging.warning("Cloud storage module not available, using local storage only")
-    
-    # Create fallback cloud storage service
-    class FallbackCloudStorageService:
-        """Fallback local storage implementation when cloud storage is not available"""
+    try:
+        from cloud_storage import cloud_storage_service as cs_service
+        cloud_storage_service = cs_service
+        CLOUD_STORAGE_AVAILABLE = True
+        logging.info("Cloud storage service initialized successfully")
+    except Exception as e:
+        logging.warning(f"Cloud storage module not available: {e}")
+        CLOUD_STORAGE_AVAILABLE = False
         
-        def __init__(self):
-            """Initialize the fallback storage service"""
-            self.local_storage_dir = Path("/tmp/uploads")
-            self.local_storage_dir.mkdir(exist_ok=True)
-            logging.info(f"Using fallback local storage at {self.local_storage_dir}")
+        # Create fallback cloud storage service
+        class FallbackCloudStorageService:
+            """Fallback local storage implementation when cloud storage is not available"""
+            
+            def __init__(self):
+                """Initialize the fallback storage service"""
+                self.local_storage_dir = Path("/tmp/uploads")
+                self.local_storage_dir.mkdir(exist_ok=True)
+                logging.info(f"Using fallback local storage at {self.local_storage_dir}")
+            
+            async def upload_file(self, content: bytes, user_id: str, project_id: str, 
+                                 folder: str, filename: str, content_type: str) -> str:
+                """Upload file to local storage"""
+                try:
+                    # Create user and project directories
+                    user_dir = self.local_storage_dir / user_id
+                    project_dir = user_dir / project_id / folder
+                    project_dir.mkdir(parents=True, exist_ok=True)
+                    
+                    # Generate unique filename
+                    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+                    file_extension = filename.split('.')[-1] if '.' in filename else 'bin'
+                    local_filename = f"{timestamp}_{uuid.uuid4().hex[:8]}.{file_extension}"
+                    
+                    file_path = project_dir / local_filename
+                    
+                    async with aiofiles.open(file_path, "wb") as f:
+                        await f.write(content)
+                    
+                    logging.info(f"File saved locally at {file_path}")
+                    return str(file_path)
+                    
+                except Exception as e:
+                    logging.error(f"Error uploading file: {str(e)}")
+                    raise
         
-        async def upload_file(self, content: bytes, user_id: str, project_id: str, 
-                             folder: str, filename: str, content_type: str) -> str:
-            """Upload file to local storage"""
-            try:
-                # Create user and project directories
-                user_dir = self.local_storage_dir / user_id
-                project_dir = user_dir / project_id / folder
-                project_dir.mkdir(parents=True, exist_ok=True)
-                
-                # Generate unique filename
-                timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-                file_extension = filename.split('.')[-1] if '.' in filename else 'bin'
-                local_filename = f"{timestamp}_{uuid.uuid4().hex[:8]}.{file_extension}"
-                
-                file_path = project_dir / local_filename
-                
-                async with aiofiles.open(file_path, "wb") as f:
-                    await f.write(content)
-                
-                logging.info(f"File saved locally at {file_path}")
-                return str(file_path)
-                
-            except Exception as e:
-                logging.error(f"Error uploading file: {str(e)}")
-                raise
-    
-    # Create a singleton instance
-    cloud_storage_service = FallbackCloudStorageService()
+        # Create a singleton instance
+        cloud_storage_service = FallbackCloudStorageService()
+
+# Initialize cloud storage
+initialize_cloud_storage()
 
 # Import our AI Video Editor
 # from ai_video_editor import ai_video_editor  # TODO: Implement this module later
