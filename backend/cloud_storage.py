@@ -110,7 +110,8 @@ class CloudStorageService:
             file_key = self.generate_file_key(user_id, project_id, file_type, filename)
             
             # Set lifecycle tags for 7-day retention
-            tagging = "RetentionDays=7&AutoDelete=true"
+            # Note: Tagging is not supported by Cloudflare R2, so we'll use metadata only
+            # tagging = "RetentionDays=7&AutoDelete=true"
             
             # Use thread pool for upload
             def _upload():
@@ -119,13 +120,15 @@ class CloudStorageService:
                     Key=file_key,
                     Body=file_content,
                     ContentType=content_type,
-                    Tagging=tagging,
+                    # Tagging=tagging,  # Removed as not supported by Cloudflare R2
                     Metadata={
                         'user-id': user_id,
                         'project-id': project_id,
                         'file-type': file_type,
                         'upload-date': datetime.utcnow().isoformat(),
-                        'expires-at': (datetime.utcnow() + timedelta(days=7)).isoformat()
+                        'expires-at': (datetime.utcnow() + timedelta(days=7)).isoformat(),
+                        'retention-days': '7',
+                        'auto-delete': 'true'
                     }
                 )
             
