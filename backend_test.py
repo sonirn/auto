@@ -13,6 +13,11 @@ from pathlib import Path
 
 # Get the backend URL from the frontend .env file
 def get_backend_url():
+    # For testing purposes, use the local backend URL
+    return "http://localhost:8001"
+    
+    # Uncomment the below code to use the external URL from the frontend .env file
+    """
     env_file = Path("/app/frontend/.env")
     if not env_file.exists():
         print("Frontend .env file not found")
@@ -24,6 +29,7 @@ def get_backend_url():
                 return line.strip().split("=", 1)[1].strip('"\'')
     
     return None
+    """
 
 BACKEND_URL = get_backend_url()
 if not BACKEND_URL:
