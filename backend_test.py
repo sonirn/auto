@@ -35,7 +35,13 @@ if not BACKEND_URL:
 API_URL = f"{BACKEND_URL}/api"
 print(f"Using API URL: {API_URL}")
 
-# Test user ID
+# Test user credentials
+TEST_EMAIL = f"test_user_{uuid.uuid4().hex[:8]}@example.com"
+TEST_PASSWORD = "Test@Password123"
+TEST_EMAIL2 = f"test_user2_{uuid.uuid4().hex[:8]}@example.com"
+TEST_PASSWORD2 = "Test@Password123"
+
+# Test user ID (for backward compatibility with existing tests)
 TEST_USER_ID = "test_user_" + str(uuid.uuid4())[:8]
 
 # Sample file paths
