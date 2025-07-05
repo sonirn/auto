@@ -35,6 +35,15 @@ except ImportError:
     AUTH_AVAILABLE = False
     logging.warning("Auth module not available, proceeding without authentication")
     
+    # Create fallback auth functions
+    def get_current_user() -> Optional[str]:
+        """Fallback: return a default user ID when auth is not available"""
+        return "default_user"
+    
+    def require_auth() -> str:
+        """Fallback: return a default user ID when auth is not available"""
+        return "default_user"
+    
 try:
     from cloud_storage import cloud_storage_service
     CLOUD_STORAGE_AVAILABLE = True
