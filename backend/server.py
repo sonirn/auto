@@ -103,6 +103,28 @@ class ChatResponse(BaseModel):
     response: str
     updated_plan: Optional[Dict[str, Any]] = None
 
+# AI Editing Models
+class EditingStyle(str, Enum):
+    DYNAMIC = "dynamic"
+    SMOOTH = "smooth"
+    CINEMATIC = "cinematic"
+    FAST_PACED = "fast_paced"
+    MINIMAL = "minimal"
+
+class AIEditRequest(BaseModel):
+    project_id: str
+    editing_style: EditingStyle = EditingStyle.DYNAMIC
+    features: List[str] = []  # e.g., ["auto_captions", "audio_enhance", "color_correct"]
+
+class VoiceoverRequest(BaseModel):
+    project_id: str
+    script: str
+    voice_id: str = "21m00Tcm4TlvDq8ikWAM"
+
+class CropRequest(BaseModel):
+    project_id: str
+    target_aspect: str = "16:9"  # "16:9", "9:16", "1:1"
+
 # Video Analysis Service
 class VideoAnalysisService:
     def __init__(self):
