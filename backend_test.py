@@ -110,11 +110,15 @@ def create_sample_files():
     os.makedirs(os.path.dirname(SAMPLE_AUDIO_PATH), exist_ok=True)
 
 # Use curl for API requests
-def curl_post(url, json_data=None, files=None, params=None):
+def curl_post(url, json_data=None, files=None, params=None, headers=None):
     cmd = ["curl", "-s", "-X", "POST"]
     
     # Add headers
-    cmd.extend(["-H", "Content-Type: application/json"])
+    if headers:
+        for key, value in headers.items():
+            cmd.extend(["-H", f"{key}: {value}"])
+    else:
+        cmd.extend(["-H", "Content-Type: application/json"])
     
     # Add JSON data
     if json_data:
@@ -139,8 +143,63 @@ def curl_post(url, json_data=None, files=None, params=None):
     except json.JSONDecodeError:
         return {"raw_response": result.stdout}
 
-def curl_get(url):
-    cmd = ["curl", "-s", "-X", "GET", url]
+def curl_get(url, headers=None):
+    cmd = ["curl", "-s", "-X", "GET"]
+    
+    # Add headers
+    if headers:
+        for key, value in headers.items():
+            cmd.extend(["-H", f"{key}: {value}"])
+    
+    # Add URL
+    cmd.append(url)
+    
+    # Execute curl command
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    
+    if result.returncode != 0:
+        raise Exception(f"Curl command failed: {result.stderr}")
+    
+    try:
+        return json.loads(result.stdout)
+    except json.JSONDecodeError:
+        return {"raw_response": result.stdout}
+
+def curl_delete(url, headers=None):
+    cmd = ["curl", "-s", "-X", "DELETE"]
+    
+    # Add headers
+    if headers:
+        for key, value in headers.items():
+            cmd.extend(["-H", f"{key}: {value}"])
+    
+    # Add URL
+    cmd.append(url)
+    
+    # Execute curl command
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    
+    if result.returncode != 0:
+        raise Exception(f"Curl command failed: {result.stderr}")
+    
+    try:
+        return json.loads(result.stdout)
+    except json.JSONDecodeError:
+        return {"raw_response": result.stdout}
+
+def curl_upload_file(url, file_path, file_type, headers=None):
+    cmd = [
+        "curl", "-s", "-X", "POST", 
+        url
+    ]
+    
+    # Add headers
+    if headers:
+        for key, value in headers.items():
+            cmd.extend(["-H", f"{key}: {value}"])
+    
+    # Add file
+    cmd.extend(["-F", f"file=@{file_path};type={file_type}"])
     
     # Execute curl command
     result = subprocess.run(cmd, capture_output=True, text=True)
