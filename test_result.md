@@ -375,9 +375,7 @@ test_plan:
     - "Video analysis with Grok AI integration"
     - "RunwayML video generation integration"
     - "Video download endpoint"
-  stuck_tasks:
-    - "RunwayML video generation integration"
-    - "Video download endpoint"
+  stuck_tasks: []
   test_all: true
   test_priority: "high_first"
 
