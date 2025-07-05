@@ -443,13 +443,13 @@ const App = () => {
                 icon="🎵"
               />
 
-              <div className="mt-8">
-                <h3 className="text-lg font-semibold text-white mb-4">Selected Files:</h3>
+              <div className="mt-6 md:mt-8">
+                <h3 className="text-base md:text-lg font-semibold text-white mb-3 md:mb-4">Selected Files:</h3>
                 <div className="space-y-2">
                   {Object.entries(files).map(([type, file]) => (
                     <div key={type} className="flex items-center justify-between bg-gray-700 p-3 rounded-lg">
-                      <span className="text-gray-300 capitalize">{type}:</span>
-                      <span className="text-white">{file ? file.name : 'None selected'}</span>
+                      <span className="text-gray-300 capitalize text-sm md:text-base">{type}:</span>
+                      <span className="text-white text-sm md:text-base truncate ml-2">{file ? file.name : 'None selected'}</span>
                     </div>
                   ))}
                 </div>
@@ -458,7 +458,7 @@ const App = () => {
               <button
                 onClick={handleAnalyze}
                 disabled={!files.sample}
-                className="w-full mt-6 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
+                className="w-full mt-4 md:mt-6 bg-blue-600 text-white py-3 md:py-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold text-sm md:text-base"
               >
                 {files.sample ? 'Analyze Video & Generate Plan' : 'Please upload a sample video'}
               </button>
