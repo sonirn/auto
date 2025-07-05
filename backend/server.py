@@ -206,7 +206,12 @@ Return your analysis in JSON format."""
             cap = cv2.VideoCapture(video_path)
             
             if not cap.isOpened():
-                raise Exception("Could not open video file")
+                # If OpenCV fails, return basic info
+                file_size = os.path.getsize(video_path) if os.path.exists(video_path) else 0
+                return {
+                    "file_size": file_size,
+                    "error": "Could not open video file with OpenCV"
+                }
             
             fps = cap.get(cv2.CAP_PROP_FPS)
             frame_count = cap.get(cv2.CAP_PROP_FRAME_COUNT)
@@ -216,7 +221,7 @@ Return your analysis in JSON format."""
             
             cap.release()
             
-            return {
+            metadata = {
                 "fps": fps,
                 "frame_count": frame_count,
                 "width": width,
@@ -224,6 +229,22 @@ Return your analysis in JSON format."""
                 "duration": duration,
                 "aspect_ratio": f"{width}:{height}"
             }
+            
+            # Try to get additional info with moviepy if available
+            if MOVIEPY_AVAILABLE:
+                try:
+                    clip = VideoFileClip(video_path)
+                    metadata.update({
+                        "moviepy_duration": clip.duration,
+                        "moviepy_fps": clip.fps,
+                        "moviepy_size": clip.size
+                    })
+                    clip.close()
+                except Exception as e:
+                    metadata["moviepy_error"] = str(e)
+            
+            return metadata
+            
         except Exception as e:
             logger.error(f"Error extracting video metadata: {str(e)}")
             return {"error": str(e)}
