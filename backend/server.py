@@ -616,14 +616,14 @@ async def chat_with_plan(project_id: str, chat_request: ChatMessage):
         
         # Create chat session for plan modification
         chat = LlmChat(
-            api_key=os.environ['XAI_API_KEY'],
+            api_key=os.environ['GROQ_API_KEY'],
             session_id=f"plan_modification_{project_id}",
             system_message=f"""You are helping to modify a video generation plan. 
             Current plan: {json.dumps(project.generation_plan, indent=2)}
             
             The user wants to make changes to this plan. Listen to their requests and provide an updated plan.
             Always return your response in JSON format with 'response' and 'updated_plan' keys."""
-        ).with_model("openai", "gpt-4o")
+        ).with_model("groq", "llama3-70b-8192")  # Using Groq for chat
         
         # Send user message
         user_message = UserMessage(text=chat_request.message)
