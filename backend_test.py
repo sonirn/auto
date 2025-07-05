@@ -354,4 +354,35 @@ class VideoGenerationBackendTest(unittest.TestCase):
 
 if __name__ == "__main__":
     # Run the tests in order
-    unittest.main(argv=['first-arg-is-ignored'], exit=False)
+    print("\n======= STARTING VIDEO GENERATION BACKEND TESTS =======\n")
+    test_suite = unittest.TestSuite()
+    test_suite.addTest(VideoGenerationBackendTest('test_01_create_project'))
+    test_suite.addTest(VideoGenerationBackendTest('test_02_upload_sample_video'))
+    test_suite.addTest(VideoGenerationBackendTest('test_03_upload_character_image'))
+    test_suite.addTest(VideoGenerationBackendTest('test_04_upload_audio'))
+    test_suite.addTest(VideoGenerationBackendTest('test_05_analyze_video'))
+    test_suite.addTest(VideoGenerationBackendTest('test_06_chat_with_plan'))
+    test_suite.addTest(VideoGenerationBackendTest('test_07_start_video_generation'))
+    test_suite.addTest(VideoGenerationBackendTest('test_08_get_project_status'))
+    test_suite.addTest(VideoGenerationBackendTest('test_09_get_project_details'))
+    test_suite.addTest(VideoGenerationBackendTest('test_10_download_video'))
+    
+    runner = unittest.TextTestRunner(verbosity=2)
+    result = runner.run(test_suite)
+    
+    print("\n======= TEST RESULTS SUMMARY =======")
+    print(f"Tests run: {result.testsRun}")
+    print(f"Errors: {len(result.errors)}")
+    print(f"Failures: {len(result.failures)}")
+    
+    if result.errors:
+        print("\n--- ERRORS ---")
+        for test, error in result.errors:
+            print(f"\n{test}:\n{error}")
+    
+    if result.failures:
+        print("\n--- FAILURES ---")
+        for test, failure in result.failures:
+            print(f"\n{test}:\n{failure}")
+    
+    print("\n======= END OF TESTS =======\n")
