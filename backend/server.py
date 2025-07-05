@@ -149,7 +149,7 @@ Then create a detailed generation plan with:
 6. Recommended AI model for generation
 
 Return your analysis in JSON format."""
-        ).with_model("google", "gemini-1.5-pro")  # Correct format: provider, model
+        ).with_model(provider="google", model="gemini-1.5-pro")  # Correct format with explicit parameter names
     async def analyze_video(self, video_path: str, character_image_path: Optional[str] = None, audio_path: Optional[str] = None) -> Dict[str, Any]:
         try:
             # Extract video metadata
