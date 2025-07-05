@@ -151,7 +151,7 @@ Then create a detailed generation plan with:
 Return your analysis in JSON format."""
         )
         # Set provider and model manually after initialization
-        self.llm_chat.provider = "google"
+        self.llm_chat.provider = "google"  # Using correct format: provider, model
         self.llm_chat.model = "gemini-1.5-pro"
     async def analyze_video(self, video_path: str, character_image_path: Optional[str] = None, audio_path: Optional[str] = None) -> Dict[str, Any]:
         try:
