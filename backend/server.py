@@ -829,7 +829,7 @@ async def upload_character_image(project_id: str, file: UploadFile = File(...), 
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.post("/projects/{project_id}/upload-audio")
-async def upload_audio(project_id: str, file: UploadFile = File(...), user_id: str = Depends(get_current_user)):
+async def upload_audio(project_id: str, file: UploadFile = File(...), user_id: str = Depends(require_auth)):
     """Upload audio file (optional)"""
     try:
         # Validate file
