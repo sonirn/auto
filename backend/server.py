@@ -128,10 +128,8 @@ class CropRequest(BaseModel):
 # Video Analysis Service
 class VideoAnalysisService:
     def __init__(self):
-        self.llm_chat = LlmChat(
-            api_key=os.environ['GEMINI_API_KEY'],
-            session_id="video_analysis",
-            system_message="""You are an expert video analysis AI. Your task is to analyze sample videos in extreme detail and create comprehensive plans for generating similar videos.
+        self.api_key = os.environ['GEMINI_API_KEY']
+        self.system_message = """You are an expert video analysis AI. Your task is to analyze sample videos in extreme detail and create comprehensive plans for generating similar videos.
 
 When analyzing a video, provide:
 1. Visual Analysis: Describe scenes, objects, characters, lighting, colors, camera movements
@@ -149,7 +147,19 @@ Then create a detailed generation plan with:
 6. Recommended AI model for generation
 
 Return your analysis in JSON format."""
-        ).with_model(provider="google", model="gemini-1.5-pro")  # Correct format with explicit parameter names
+        self.session_id = "video_analysis"
+        # Using litellm directly instead of emergentintegrations
+        try:
+            import litellm
+            self.litellm_available = True
+        except ImportError:
+            self.litellm_available = False
+            logging.warning("litellm not available, using emergentintegrations fallback")
+            self.llm_chat = LlmChat(
+                api_key=self.api_key,
+                session_id=self.session_id,
+                system_message=self.system_message
+            ).with_model(provider="google", model="gemini-1.5-pro")  # Try with explicit parameter names
     async def analyze_video(self, video_path: str, character_image_path: Optional[str] = None, audio_path: Optional[str] = None) -> Dict[str, Any]:
         try:
             # Extract video metadata
