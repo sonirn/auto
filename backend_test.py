@@ -265,7 +265,7 @@ class BackendTest(unittest.TestCase):
     
     def test_07_start_video_generation(self):
         """Test video generation API"""
-        print("\n=== Testing Video Generation API ===")
+        print("\n=== Testing Video Generation Process ===")
         
         if not hasattr(BackendTest, 'project_id') or not BackendTest.project_id:
             self.skipTest("Project ID not available, skipping test")
@@ -280,6 +280,13 @@ class BackendTest(unittest.TestCase):
             self.assertIn("project_id", data, "Project ID not found in generation response")
             
             print("Video generation started successfully")
+            print(f"Response: {data}")
+            
+            # Check project status after generation starts
+            status_url = f"{API_URL}/projects/{BackendTest.project_id}/status"
+            status_data = curl_get(status_url)
+            print(f"Project status after generation request: {status_data}")
+            
             print("✅ Video generation API works")
             return True
         except Exception as e:
@@ -287,9 +294,15 @@ class BackendTest(unittest.TestCase):
             
             # Check for specific error about generation plan
             if "No generation plan available" in str(e):
-                print("\nDETAILED ERROR: The error indicates that no generation plan is available.")
-                print("This is expected because the video analysis step failed, which is responsible for creating the generation plan.")
-                print("Fix the video analysis issue first, then this endpoint should work correctly.")
+                # Check if we have analysis data from previous test
+                if hasattr(BackendTest, 'analysis_data') and hasattr(BackendTest, 'plan_data'):
+                    print("\nDETAILED ERROR: The error indicates that no generation plan is available, but we did get analysis data.")
+                    print("This suggests the analysis data was not properly saved to the database.")
+                    print("Check the database update in the analyze_video endpoint (around line 561).")
+                else:
+                    print("\nDETAILED ERROR: The error indicates that no generation plan is available.")
+                    print("This is expected because the video analysis step may not have created a proper generation plan.")
+                    print("Check if the video analysis step completed successfully and created a valid plan.")
             
             return False
     
