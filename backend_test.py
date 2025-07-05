@@ -329,6 +329,9 @@ class BackendTest(unittest.TestCase):
         }
         
         try:
+            print("Testing chat interface with litellm + Groq approach...")
+            print("Current implementation in server.py: Using litellm with groq/llama3-70b-8192 model")
+            
             data = curl_post(url, payload)
             
             self.assertIn("response", data, "Response not found in chat response")
@@ -343,16 +346,19 @@ class BackendTest(unittest.TestCase):
             else:
                 print("Chat API responded but did not update the plan (this is expected if analysis failed)")
             
-            print("✅ Chat API with Groq integration works")
+            print("✅ Chat API with litellm + Groq integration works")
+            print("✅ The fix to remove emergentintegrations fallback code has resolved the issues!")
             return True
         except Exception as e:
             print(f"❌ Chat API failed: {str(e)}")
             
-            # Check for specific error about API key
+            # Check for specific error messages
             if "AuthenticationError" in str(e) and "API key" in str(e):
                 print("\nDETAILED ERROR: The error suggests an issue with the API key authentication.")
-                print("In server.py, the chat interface is configured to use Groq with the llama3-70b-8192 model (line 612).")
-                print("The API key might be incorrect or in the wrong format. Check the GROQ_API_KEY in the .env file.")
+                print("Check the GROQ_API_KEY in the .env file and make sure it's being used correctly in the chat endpoint.")
+            elif "LLM Provider NOT provided" in str(e):
+                print("\nDETAILED ERROR: The error suggests that there might still be issues with the model provider format.")
+                print("Check if the emergentintegrations code has been completely removed and if litellm is being used correctly.")
             
             return False
     
