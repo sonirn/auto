@@ -791,13 +791,9 @@ async def upload_character_image(project_id: str, file: UploadFile = File(...), 
         content = await file.read()
         
         # Get project to verify ownership
-        project_doc = await db.video_projects.find_one({"id": project_id})
+        project_doc = await db.video_projects.find_one({"id": project_id, "user_id": user_id})
         if not project_doc:
-            raise HTTPException(status_code=404, detail="Project not found")
-        
-        # If user is authenticated, verify ownership
-        if user_id and project_doc.get('user_id') != user_id:
-            raise HTTPException(status_code=403, detail="Not authorized to access this project")
+            raise HTTPException(status_code=404, detail="Project not found or access denied")
         
         # Upload to cloud storage
         file_url = await cloud_storage_service.upload_file(
