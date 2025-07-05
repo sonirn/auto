@@ -58,10 +58,22 @@ def initialize_cloud_storage():
     global CLOUD_STORAGE_AVAILABLE, cloud_storage_service
     
     try:
-        from cloud_storage import cloud_storage_service as cs_service
-        cloud_storage_service = cs_service
+        # Add current directory to path if needed
+        import sys
+        if '/app/backend' not in sys.path:
+            sys.path.insert(0, '/app/backend')
+        
+        # Import cloud storage module
+        import cloud_storage as cs_module
+        
+        # Get the service instance
+        cloud_storage_service = cs_module.cloud_storage_service
         CLOUD_STORAGE_AVAILABLE = True
-        logging.info("Cloud storage service initialized successfully")
+        
+        # Log service status
+        service_info = cloud_storage_service.get_storage_info()
+        logging.info(f"Cloud storage service initialized: {service_info}")
+        
     except Exception as e:
         logging.warning(f"Cloud storage module not available: {e}")
         CLOUD_STORAGE_AVAILABLE = False
@@ -101,6 +113,14 @@ def initialize_cloud_storage():
                 except Exception as e:
                     logging.error(f"Error uploading file: {str(e)}")
                     raise
+            
+            def get_storage_info(self):
+                """Get storage service information"""
+                return {
+                    'service': 'Local Storage (Fallback)',
+                    'path': str(self.local_storage_dir),
+                    'status': 'fallback'
+                }
         
         # Create a singleton instance
         cloud_storage_service = FallbackCloudStorageService()
