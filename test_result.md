@@ -145,7 +145,7 @@ backend:
     implemented: true
     working: false
     file: "/app/backend/server.py"
-    stuck_count: 2
+    stuck_count: 3
     priority: "high"
     needs_retesting: false
     status_history:
@@ -164,6 +164,9 @@ backend:
       - working: false
         agent: "testing"
         comment: "Even with file attachments disabled, the video analysis endpoint is still failing with error: 'LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemini-1.5-pro'. This suggests an issue with how the emergentintegrations package is handling the model provider configuration."
+      - working: false
+        agent: "testing"
+        comment: "After multiple attempts to fix the model format, the video analysis endpoint is still failing with the same error: 'LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemini-1.5-pro'. This appears to be an issue with the emergentintegrations package and how it integrates with litellm. The package may require a specific format for the model provider that is not documented."
   
   - task: "Chat interface for plan modifications"
     implemented: true
