@@ -558,7 +558,7 @@ async def process_video_generation(project_id: str):
 
 # Authentication Routes
 @api_router.post("/auth/register")
-async def register_user(email: str, password: str):
+async def register_user(auth_request: AuthRequest):
     """Register a new user with Supabase"""
     try:
         import httpx
@@ -572,8 +572,8 @@ async def register_user(email: str, password: str):
                     "Content-Type": "application/json"
                 },
                 json={
-                    "email": email,
-                    "password": password
+                    "email": auth_request.email,
+                    "password": auth_request.password
                 }
             )
             
@@ -588,7 +588,7 @@ async def register_user(email: str, password: str):
             # Create user record in our database
             user_data = {
                 "id": data["user"]["id"],
-                "email": email,
+                "email": auth_request.email,
                 "created_at": datetime.utcnow(),
                 "last_login": datetime.utcnow(),
                 "projects": [],
@@ -601,7 +601,7 @@ async def register_user(email: str, password: str):
                 "message": "User registered successfully",
                 "user": {
                     "id": data["user"]["id"],
-                    "email": email
+                    "email": auth_request.email
                 },
                 "access_token": data["access_token"]
             }
@@ -611,7 +611,7 @@ async def register_user(email: str, password: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.post("/auth/login")
-async def login_user(email: str, password: str):
+async def login_user(auth_request: AuthRequest):
     """Login user with Supabase"""
     try:
         import httpx
@@ -625,8 +625,8 @@ async def login_user(email: str, password: str):
                     "Content-Type": "application/json"
                 },
                 json={
-                    "email": email,
-                    "password": password
+                    "email": auth_request.email,
+                    "password": auth_request.password
                 }
             )
             
