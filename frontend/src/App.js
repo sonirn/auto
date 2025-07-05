@@ -170,18 +170,18 @@ const ChatInterface = ({ projectId, onPlanUpdate }) => {
   };
 
   return (
-    <div className="bg-gray-900 rounded-lg p-6 mb-6">
-      <h3 className="text-xl font-semibold text-white mb-4">💬 Chat with AI</h3>
+    <div className="bg-gray-900 rounded-lg p-4 md:p-6 mb-4 md:mb-6">
+      <h3 className="text-lg md:text-xl font-semibold text-white mb-4">💬 Chat with AI</h3>
       
-      <div className="h-64 bg-gray-800 rounded-lg p-4 mb-4 overflow-y-auto">
+      <div className="h-48 md:h-64 bg-gray-800 rounded-lg p-3 md:p-4 mb-4 overflow-y-auto">
         {messages.length === 0 ? (
-          <p className="text-gray-500 text-center">
+          <p className="text-gray-500 text-center text-sm md:text-base">
             Ask me to modify the generation plan or ask questions about your video.
           </p>
         ) : (
           messages.map((msg, index) => (
             <div key={index} className={`mb-3 ${msg.sender === 'user' ? 'text-right' : 'text-left'}`}>
-              <div className={`inline-block p-3 rounded-lg max-w-xs ${
+              <div className={`inline-block p-2 md:p-3 rounded-lg max-w-xs md:max-w-sm text-sm md:text-base ${
                 msg.sender === 'user' 
                   ? 'bg-blue-600 text-white' 
                   : 'bg-gray-700 text-gray-200'
@@ -193,7 +193,7 @@ const ChatInterface = ({ projectId, onPlanUpdate }) => {
         )}
         {isLoading && (
           <div className="text-left">
-            <div className="inline-block p-3 rounded-lg bg-gray-700 text-gray-200">
+            <div className="inline-block p-2 md:p-3 rounded-lg bg-gray-700 text-gray-200 text-sm md:text-base">
               AI is typing...
             </div>
           </div>
@@ -207,12 +207,12 @@ const ChatInterface = ({ projectId, onPlanUpdate }) => {
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
           placeholder="Type your message..."
-          className="flex-1 bg-gray-800 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 bg-gray-800 text-white rounded-lg px-3 md:px-4 py-2 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <button
           onClick={sendMessage}
           disabled={isLoading || !inputMessage.trim()}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="bg-blue-600 text-white px-4 md:px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm md:text-base"
         >
           Send
         </button>
