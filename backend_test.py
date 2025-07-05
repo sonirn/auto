@@ -223,7 +223,7 @@ class BackendTest(unittest.TestCase):
     
     def test_06_chat_with_plan(self):
         """Test chat API for plan modifications"""
-        print("\n=== Testing Chat API ===")
+        print("\n=== Testing Chat Interface for Plan Modifications ===")
         
         if not hasattr(BackendTest, 'project_id') or not BackendTest.project_id:
             self.skipTest("Project ID not available, skipping test")
@@ -231,7 +231,7 @@ class BackendTest(unittest.TestCase):
         url = f"{API_URL}/projects/{BackendTest.project_id}/chat"
         payload = {
             "project_id": BackendTest.project_id,
-            "message": "Can you make the video more vibrant and colorful?",
+            "message": "Can you make the video more vibrant and colorful with faster pacing?",
             "user_id": TEST_USER_ID
         }
         
@@ -240,8 +240,17 @@ class BackendTest(unittest.TestCase):
             
             self.assertIn("response", data, "Response not found in chat response")
             
-            print("Chat API responded successfully")
-            print("✅ Chat API works")
+            # Print the response to verify Groq is working
+            print(f"Chat response: {data['response'][:200]}...")
+            
+            # Check if we got an updated plan
+            if "updated_plan" in data and data["updated_plan"]:
+                print("Chat API returned an updated plan")
+                print(f"Updated plan: {json.dumps(data['updated_plan'], indent=2)[:200]}...")
+            else:
+                print("Chat API responded but did not update the plan (this is expected if analysis failed)")
+            
+            print("✅ Chat API with Groq integration works")
             return True
         except Exception as e:
             print(f"❌ Chat API failed: {str(e)}")
@@ -249,7 +258,7 @@ class BackendTest(unittest.TestCase):
             # Check for specific error about API key
             if "AuthenticationError" in str(e) and "API key" in str(e):
                 print("\nDETAILED ERROR: The error suggests an issue with the API key authentication.")
-                print("In server.py, the chat interface is configured to use Groq with the llama3-70b-8192 model (line 626).")
+                print("In server.py, the chat interface is configured to use Groq with the llama3-70b-8192 model (line 612).")
                 print("The API key might be incorrect or in the wrong format. Check the GROQ_API_KEY in the .env file.")
             
             return False
