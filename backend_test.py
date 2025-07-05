@@ -227,7 +227,9 @@ class BackendTest(unittest.TestCase):
         url = f"{API_URL}/projects/{BackendTest.project_id}/analyze"
         
         try:
-            data = curl_post(url)
+            response = requests.post(url)
+            response.raise_for_status()
+            data = response.json()
             
             self.assertIn("analysis", data, "Analysis data not found in response")
             self.assertIn("plan", data, "Plan data not found in response")
@@ -247,7 +249,7 @@ class BackendTest(unittest.TestCase):
                     return True
             
             print("Video analysis completed successfully")
-            print("✅ Video analysis API works")
+            print("✅ Video analysis API works with corrected Gemini provider format (gemini/gemini-1.5-pro)")
             return True
         except Exception as e:
             print(f"❌ Video analysis API failed: {str(e)}")
@@ -257,6 +259,10 @@ class BackendTest(unittest.TestCase):
                 print("\nDETAILED ERROR: The error suggests that the code is trying to use a provider other than Gemini for file attachments.")
                 print("In server.py, the VideoAnalysisService is configured to use Gemini (line 152), but there might be an issue with how the provider is being used.")
                 print("This could be due to a conflict in the emergentintegrations package or how it's being initialized.")
+            elif "LLM Provider NOT provided" in str(e):
+                print("\nDETAILED ERROR: The error suggests that the emergentintegrations package is not recognizing the provider format.")
+                print("The code is using 'gemini/gemini-1.5-pro' as the provider format, but the package might be expecting a different format.")
+                print("Check the emergentintegrations package documentation for the correct provider format.")
             
             return False
     
