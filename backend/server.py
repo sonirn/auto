@@ -730,11 +730,8 @@ async def delete_project(project_id: str, user_id: str = Depends(require_auth)):
 @api_router.post("/projects", response_model=VideoProject)
 async def create_project(input: VideoProjectCreate, user_id: str = Depends(require_auth)):
     """Create a new video project"""
-    # Use authenticated user ID if available, otherwise use provided user_id for backwards compatibility
-    project_user_id = user_id if user_id else input.user_id
-    
     project_data = input.dict()
-    project_data['user_id'] = project_user_id
+    project_data['user_id'] = user_id
     project = VideoProject(**project_data)
     await db.video_projects.insert_one(project.dict())
     return project
