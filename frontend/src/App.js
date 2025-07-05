@@ -416,11 +416,11 @@ const App = () => {
         )}
 
         {/* Main Content */}
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto px-2 md:px-0">
           {/* Upload Step */}
           {currentStep === 'upload' && (
-            <div className="bg-gray-800 rounded-lg p-8">
-              <h2 className="text-2xl font-bold text-white mb-6">Upload Your Files</h2>
+            <div className="bg-gray-800 rounded-lg p-4 md:p-8">
+              <h2 className="text-xl md:text-2xl font-bold text-white mb-4 md:mb-6">Upload Your Files</h2>
               
               <FileUpload
                 onFileSelect={(file) => handleFileSelect(file, 'sample')}
