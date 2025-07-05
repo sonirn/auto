@@ -354,28 +354,55 @@ const App = () => {
           </p>
         </div>
 
-        {/* Progress Steps */}
-        <div className="flex justify-center mb-8">
-          <div className="flex items-center space-x-4">
-            {[
-              { step: 'upload', label: 'Upload', icon: '📤' },
-              { step: 'analyzing', label: 'Analyze', icon: '🔍' },
-              { step: 'planning', label: 'Plan', icon: '📝' },
-              { step: 'generating', label: 'Generate', icon: '🎬' },
-              { step: 'completed', label: 'Done', icon: '✅' }
-            ].map((item, index) => (
-              <div key={item.step} className="flex items-center">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl ${
-                  currentStep === item.step || videoStatus.status === item.step
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-700 text-gray-400'
-                }`}>
-                  {item.icon}
+        {/* Progress Steps - Mobile Optimized */}
+        <div className="mb-8">
+          {/* Mobile Progress - Horizontal Scroll */}
+          <div className="md:hidden">
+            <div className="flex items-center space-x-3 overflow-x-auto pb-4 px-2">
+              {[
+                { step: 'upload', label: 'Upload', icon: '📤' },
+                { step: 'analyzing', label: 'Analyze', icon: '🔍' },
+                { step: 'planning', label: 'Plan', icon: '📝' },
+                { step: 'generating', label: 'Generate', icon: '🎬' },
+                { step: 'completed', label: 'Done', icon: '✅' }
+              ].map((item, index) => (
+                <div key={item.step} className="flex flex-col items-center min-w-[80px]">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${
+                    currentStep === item.step || videoStatus.status === item.step
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-700 text-gray-400'
+                  }`}>
+                    {item.icon}
+                  </div>
+                  <span className="mt-1 text-xs text-gray-300 text-center">{item.label}</span>
                 </div>
-                <span className="ml-2 text-sm text-gray-300">{item.label}</span>
-                {index < 4 && <div className="w-8 h-0.5 bg-gray-600 mx-4" />}
-              </div>
-            ))}
+              ))}
+            </div>
+          </div>
+          
+          {/* Desktop Progress - Original */}
+          <div className="hidden md:flex justify-center">
+            <div className="flex items-center space-x-4">
+              {[
+                { step: 'upload', label: 'Upload', icon: '📤' },
+                { step: 'analyzing', label: 'Analyze', icon: '🔍' },
+                { step: 'planning', label: 'Plan', icon: '📝' },
+                { step: 'generating', label: 'Generate', icon: '🎬' },
+                { step: 'completed', label: 'Done', icon: '✅' }
+              ].map((item, index) => (
+                <div key={item.step} className="flex items-center">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl ${
+                    currentStep === item.step || videoStatus.status === item.step
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-700 text-gray-400'
+                  }`}>
+                    {item.icon}
+                  </div>
+                  <span className="ml-2 text-sm text-gray-300">{item.label}</span>
+                  {index < 4 && <div className="w-8 h-0.5 bg-gray-600 mx-4" />}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
