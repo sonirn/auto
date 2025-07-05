@@ -23,13 +23,24 @@ except ImportError:
     MOVIEPY_AVAILABLE = False
     logging.warning("moviepy not available, video metadata extraction will be limited")
 
-from emergentintegrations.llm.chat import LlmChat, UserMessage, FileContentWithMimeType
 import httpx
 from enum import Enum
+import litellm
 
-# Import our custom modules
-from auth import get_current_user, require_auth
-from cloud_storage import cloud_storage_service
+# Import our custom modules (make auth and cloud_storage optional for now)
+try:
+    from auth import get_current_user, require_auth
+    AUTH_AVAILABLE = True
+except ImportError:
+    AUTH_AVAILABLE = False
+    logging.warning("Auth module not available, proceeding without authentication")
+    
+try:
+    from cloud_storage import cloud_storage_service
+    CLOUD_STORAGE_AVAILABLE = True
+except ImportError:
+    CLOUD_STORAGE_AVAILABLE = False
+    logging.warning("Cloud storage module not available, using local storage only")
 
 # Import our AI Video Editor
 # from ai_video_editor import ai_video_editor  # TODO: Implement this module later
