@@ -145,7 +145,7 @@ backend:
     implemented: true
     working: false
     file: "/app/backend/server.py"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
     needs_retesting: false
     status_history:
@@ -161,6 +161,9 @@ backend:
       - working: false
         agent: "testing"
         comment: "Confirmed the video analysis endpoint is still failing with the same error: 'File attachments are only supported with Gemini provider'. The code is correctly configured to use Gemini (line 152), but there might be an issue with how the emergentintegrations package is handling the provider selection."
+      - working: false
+        agent: "testing"
+        comment: "Even with file attachments disabled, the video analysis endpoint is still failing with error: 'LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemini-1.5-pro'. This suggests an issue with how the emergentintegrations package is handling the model provider configuration."
   
   - task: "Chat interface for plan modifications"
     implemented: true
