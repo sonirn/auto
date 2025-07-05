@@ -40,24 +40,24 @@ const VideoStatus = ({ status, progress, timeRemaining }) => {
   };
 
   return (
-    <div className="bg-gray-900 rounded-lg p-6 mb-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-semibold text-white">{getStatusText()}</h3>
+    <div className="bg-gray-900 rounded-lg p-4 md:p-6 mb-4 md:mb-6">
+      <div className="flex items-center justify-between mb-3 md:mb-4">
+        <h3 className="text-lg md:text-xl font-semibold text-white">{getStatusText()}</h3>
         {timeRemaining > 0 && (
-          <span className="text-sm text-gray-300">
+          <span className="text-xs md:text-sm text-gray-300">
             {formatTime(timeRemaining)} remaining
           </span>
         )}
       </div>
       
-      <div className="w-full bg-gray-700 rounded-full h-3 mb-4">
+      <div className="w-full bg-gray-700 rounded-full h-2 md:h-3 mb-3 md:mb-4">
         <div 
-          className={`h-3 rounded-full transition-all duration-300 ${getStatusColor()}`}
+          className={`h-2 md:h-3 rounded-full transition-all duration-300 ${getStatusColor()}`}
           style={{ width: `${progress * 100}%` }}
         ></div>
       </div>
       
-      <div className="text-sm text-gray-400">
+      <div className="text-xs md:text-sm text-gray-400">
         {Math.round(progress * 100)}% complete
       </div>
     </div>
