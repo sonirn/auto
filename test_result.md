@@ -147,7 +147,7 @@ backend:
     file: "/app/backend/server.py"
     stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
@@ -158,6 +158,9 @@ backend:
       - working: false
         agent: "testing"
         comment: "Video analysis endpoint is failing with error: 'File attachments are only supported with Gemini provider'. The code is trying to use OpenAI model via emergentintegrations, but file attachments are only supported with Gemini provider."
+      - working: false
+        agent: "testing"
+        comment: "Confirmed the video analysis endpoint is still failing with the same error: 'File attachments are only supported with Gemini provider'. The code is correctly configured to use Gemini (line 152), but there might be an issue with how the emergentintegrations package is handling the provider selection."
   
   - task: "Chat interface for plan modifications"
     implemented: true
