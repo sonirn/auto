@@ -343,12 +343,8 @@ metadata:
 test_plan:
   current_focus:
     - "Video analysis with Grok AI integration"
-    - "Chat interface for plan modifications"
-    - "RunwayML video generation integration"
-    - "Video download endpoint"
   stuck_tasks:
     - "Video analysis with Grok AI integration"
-    - "Chat interface for plan modifications"
     - "RunwayML video generation integration"
     - "Video download endpoint"
   test_all: true
