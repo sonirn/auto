@@ -189,7 +189,7 @@ backend:
     file: "/app/backend/server.py"
     stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
@@ -200,6 +200,9 @@ backend:
       - working: false
         agent: "testing"
         comment: "Video generation endpoint is failing with error: 'No generation plan available'. This is because the video analysis step is failing, so no generation plan is created."
+      - working: false
+        agent: "testing"
+        comment: "Confirmed the video generation endpoint is still failing with the same error: 'No generation plan available'. This is expected because the video analysis step is failing, which is responsible for creating the generation plan. The code itself is properly implemented, but it depends on the video analysis step working correctly."
   
   - task: "Background video processing"
     implemented: true
