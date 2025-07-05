@@ -283,11 +283,40 @@ class BackendTest(unittest.TestCase):
         if not hasattr(BackendTest, 'project_id') or not BackendTest.project_id:
             self.skipTest("Project ID not available, skipping test")
         
-        # For file uploads, we'll need to use a different approach with curl
-        # This is a simplified test that doesn't actually upload a file
-        print("Skipping actual file upload test as it requires multipart/form-data")
-        print("✅ Audio upload API works (skipped actual upload)")
-        return True
+        project_id = BackendTest.project_id
+        
+        # Create sample files if they don't exist
+        create_sample_files()
+        
+        # Use curl to upload the file
+        cmd = [
+            "curl", "-s", "-X", "POST", 
+            f"{API_URL}/projects/{project_id}/upload-audio",
+            "-F", f"file=@{SAMPLE_AUDIO_PATH};type=audio/mpeg"
+        ]
+        
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            
+            if result.returncode != 0:
+                raise Exception(f"Curl command failed: {result.stderr}")
+            
+            try:
+                data = json.loads(result.stdout)
+                print(f"Upload response: {data}")
+                print("✅ Audio upload API works")
+                return True
+            except json.JSONDecodeError:
+                print(f"Raw response: {result.stdout}")
+                if "uploaded successfully" in result.stdout:
+                    print("✅ Audio upload API works")
+                    return True
+                else:
+                    raise Exception(f"Failed to parse response: {result.stdout}")
+                
+        except Exception as e:
+            print(f"❌ Audio upload API failed: {str(e)}")
+            return False
     
     def test_05_analyze_video(self):
         """Test video analysis API"""
