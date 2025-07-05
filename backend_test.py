@@ -133,7 +133,9 @@ class BackendTest(unittest.TestCase):
         payload = {"user_id": TEST_USER_ID}
         
         try:
-            data = curl_post(url, payload)
+            response = requests.post(url, json=payload)
+            response.raise_for_status()
+            data = response.json()
             
             self.assertIn("id", data, "Project ID not found in response")
             self.assertEqual(data["user_id"], TEST_USER_ID, "User ID mismatch")
