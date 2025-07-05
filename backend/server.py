@@ -165,9 +165,6 @@ Return your analysis in JSON format."""
             # Extract video metadata
             video_metadata = await self._extract_video_metadata(video_path)
             
-            # For now, let's test without file attachments to isolate the issue
-            # TODO: Re-enable file attachments once provider issue is resolved
-            
             # Create analysis prompt without file attachments
             analysis_prompt = f"""
             Please analyze this video based on the metadata provided: {video_metadata}
@@ -192,20 +189,37 @@ Return your analysis in JSON format."""
             Return response in JSON format with 'analysis' and 'plan' keys.
             """
             
-            # Send to LLM for analysis
-            user_message = UserMessage(text=analysis_prompt)
-            
-            response = await self.llm_chat.send_message(user_message)
+            # Use litellm directly if available
+            if self.litellm_available:
+                import litellm
+                
+                messages = [
+                    {"role": "system", "content": self.system_message},
+                    {"role": "user", "content": analysis_prompt}
+                ]
+                
+                response = await asyncio.to_thread(
+                    litellm.completion,
+                    model="google/gemini-1.5-pro",
+                    messages=messages,
+                    api_key=self.api_key
+                )
+                
+                response_text = response.choices[0].message.content
+            else:
+                # Fallback to emergentintegrations
+                user_message = UserMessage(text=analysis_prompt)
+                response_text = await self.llm_chat.send_message(user_message)
             
             # Parse JSON response
             try:
-                analysis_data = json.loads(response)
+                analysis_data = json.loads(response_text)
                 return analysis_data
             except json.JSONDecodeError:
                 # If not valid JSON, structure the response
                 return {
                     "analysis": {
-                        "raw_response": response,
+                        "raw_response": response_text,
                         "metadata": video_metadata,
                         "note": "File attachments temporarily disabled - analysis based on metadata only"
                     },
