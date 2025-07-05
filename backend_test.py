@@ -213,6 +213,13 @@ class BackendTest(unittest.TestCase):
             print(f"❌ Video analysis API failed: {str(e)}")
             if hasattr(e, 'response') and e.response:
                 print(f"Response: {e.response.text}")
+                
+                # Check for specific error about Gemini provider
+                if "File attachments are only supported with Gemini provider" in e.response.text:
+                    print("\nDETAILED ERROR: The error suggests that the code is trying to use a provider other than Gemini for file attachments.")
+                    print("In server.py, the VideoAnalysisService is configured to use Gemini (line 152), but there might be an issue with how the provider is being used.")
+                    print("This could be due to a conflict in the emergentintegrations package or how it's being initialized.")
+            
             return False
     
     def test_06_chat_with_plan(self):
