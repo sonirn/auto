@@ -149,7 +149,7 @@ Then create a detailed generation plan with:
 6. Recommended AI model for generation
 
 Return your analysis in JSON format."""
-        ).with_model("google", "gemini-1.5-pro")  # Using correct format for emergentintegrations
+        ).with_model(provider="google", model="gemini-1.5-pro")  # Using correct format for emergentintegrations
     
     async def analyze_video(self, video_path: str, character_image_path: Optional[str] = None, audio_path: Optional[str] = None) -> Dict[str, Any]:
         try:
