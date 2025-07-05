@@ -588,8 +588,8 @@ const App = () => {
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-12 text-gray-500">
-          <p>© 2025 AI Video Generator - Create amazing videos with AI</p>
+        <div className="text-center mt-8 md:mt-12 text-gray-500">
+          <p className="text-xs md:text-sm">© 2025 AI Video Generator - Create amazing videos with AI</p>
         </div>
       </div>
     </div>
