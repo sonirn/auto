@@ -227,6 +227,9 @@ class BackendTest(unittest.TestCase):
         url = f"{API_URL}/projects/{BackendTest.project_id}/analyze"
         
         try:
+            print("Testing video analysis with fixed emergentintegrations model format...")
+            print("Current format in server.py: .with_model(\"google\", \"gemini-1.5-pro\")")
+            
             response = requests.post(url)
             response.raise_for_status()
             data = response.json()
@@ -246,10 +249,17 @@ class BackendTest(unittest.TestCase):
                     BackendTest.plan_data = data["plan"]
                     
                     print("✅ Video analysis API works with text-only analysis (file attachments disabled)")
+                    print("✅ The emergentintegrations fix for model format (\"google\", \"gemini-1.5-pro\") has resolved the issue!")
                     return True
             
             print("Video analysis completed successfully")
-            print("✅ Video analysis API works with corrected Gemini provider format (gemini/gemini-1.5-pro)")
+            print("✅ Video analysis API works with corrected Gemini provider format (\"google\", \"gemini-1.5-pro\")")
+            print("✅ The emergentintegrations fix has resolved the \"LLM Provider NOT provided\" error!")
+            
+            # Store analysis and plan for other tests
+            BackendTest.analysis_data = data.get("analysis", {})
+            BackendTest.plan_data = data.get("plan", {})
+            
             return True
         except Exception as e:
             print(f"❌ Video analysis API failed: {str(e)}")
@@ -261,8 +271,8 @@ class BackendTest(unittest.TestCase):
                 print("This could be due to a conflict in the emergentintegrations package or how it's being initialized.")
             elif "LLM Provider NOT provided" in str(e):
                 print("\nDETAILED ERROR: The error suggests that the emergentintegrations package is not recognizing the provider format.")
-                print("The code is using 'gemini/gemini-1.5-pro' as the provider format, but the package might be expecting a different format.")
-                print("Check the emergentintegrations package documentation for the correct provider format.")
+                print("The code is using (\"google\", \"gemini-1.5-pro\") as the provider format, but the package might still be having issues.")
+                print("The fix for the model format has not resolved the issue. Further investigation is needed.")
             
             return False
     
