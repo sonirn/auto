@@ -16,7 +16,13 @@ import asyncio
 import json
 import cv2
 import base64
-from moviepy.editor import VideoFileClip
+try:
+    from moviepy.editor import VideoFileClip
+    MOVIEPY_AVAILABLE = True
+except ImportError:
+    MOVIEPY_AVAILABLE = False
+    logging.warning("moviepy not available, video metadata extraction will be limited")
+
 from emergentintegrations.llm.chat import LlmChat, UserMessage, FileContentWithMimeType
 import httpx
 from enum import Enum
