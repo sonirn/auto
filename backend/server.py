@@ -149,7 +149,7 @@ Then create a detailed generation plan with:
 6. Recommended AI model for generation
 
 Return your analysis in JSON format."""
-        ).with_model("google", "gemini-pro-vision")  # Using Gemini for file analysis
+        ).with_model("google", "gemini-1.5-pro")  # Using Gemini 1.5 Pro for file analysis
     
     async def analyze_video(self, video_path: str, character_image_path: Optional[str] = None, audio_path: Optional[str] = None) -> Dict[str, Any]:
         try:
