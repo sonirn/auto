@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, UploadFile, File, HTTPException, BackgroundTasks
+from fastapi import FastAPI, APIRouter, UploadFile, File, HTTPException, BackgroundTasks, Depends
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -26,6 +26,10 @@ except ImportError:
 from emergentintegrations.llm.chat import LlmChat, UserMessage, FileContentWithMimeType
 import httpx
 from enum import Enum
+
+# Import our custom modules
+from auth import get_current_user, require_auth
+from cloud_storage import cloud_storage_service
 
 # Import our AI Video Editor
 # from ai_video_editor import ai_video_editor  # TODO: Implement this module later
