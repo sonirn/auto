@@ -82,7 +82,7 @@ class CloudflareR2Test(unittest.TestCase):
         """Set up test environment"""
         create_sample_files()
         self.project_id = None
-        self.api_url = "http://localhost:8001/api"
+        self.api_url = "http://127.0.0.1:8001/api"
         print(f"Using API URL: {self.api_url}")
     
     def test_01_storage_status(self):
