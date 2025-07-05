@@ -589,6 +589,21 @@ async def process_video_generation(project_id: str):
             }
         )
 
+@api_router.get("/storage/status")
+async def get_storage_status():
+    """Get storage service status"""
+    try:
+        storage_info = cloud_storage_service.get_storage_info()
+        return {
+            "available": CLOUD_STORAGE_AVAILABLE,
+            "storage_info": storage_info
+        }
+    except Exception as e:
+        return {
+            "available": False,
+            "error": str(e)
+        }
+
 # Authentication Routes
 @api_router.post("/auth/register")
 async def register_user(auth_request: AuthRequest):
