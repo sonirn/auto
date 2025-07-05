@@ -96,12 +96,12 @@ const FileUpload = ({ onFileSelect, accept, label, icon }) => {
   };
 
   return (
-    <div className="mb-6">
+    <div className="mb-4 md:mb-6">
       <label className="block text-sm font-medium text-gray-300 mb-2">
         {label}
       </label>
       <div
-        className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+        className={`border-2 border-dashed rounded-lg p-4 md:p-8 text-center cursor-pointer transition-colors ${
           dragActive 
             ? 'border-blue-500 bg-blue-500/10' 
             : 'border-gray-600 hover:border-gray-500'
@@ -112,11 +112,11 @@ const FileUpload = ({ onFileSelect, accept, label, icon }) => {
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
       >
-        <div className="text-4xl mb-2">{icon}</div>
-        <p className="text-gray-300 mb-1">
+        <div className="text-2xl md:text-4xl mb-2">{icon}</div>
+        <p className="text-gray-300 mb-1 text-sm md:text-base">
           Drag & drop your file here, or click to select
         </p>
-        <p className="text-sm text-gray-500">
+        <p className="text-xs md:text-sm text-gray-500">
           {accept.includes('video') && 'Max 60 seconds'}
           {accept.includes('image') && 'JPEG, PNG supported'}
           {accept.includes('audio') && 'MP3, WAV supported'}
