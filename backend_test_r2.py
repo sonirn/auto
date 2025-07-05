@@ -11,7 +11,7 @@ from pathlib import Path
 # Get the backend URL from the frontend .env file
 def get_backend_url():
     # Use local URL for testing
-    return "http://0.0.0.0:8001"
+    return "http://localhost:8001"
 
 BACKEND_URL = get_backend_url()
 if not BACKEND_URL:
