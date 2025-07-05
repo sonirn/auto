@@ -381,6 +381,13 @@ class BackendTest(unittest.TestCase):
             print(f"❌ Video download API failed: {str(e)}")
             if hasattr(e, 'response') and e.response:
                 print(f"Response: {e.response.text}")
+                
+                # Check for specific error about video not ready
+                if "Video not ready for download" in e.response.text:
+                    print("\nDETAILED ERROR: The error indicates that the video is not ready for download.")
+                    print("This is expected because the video generation process failed due to the issues with the video analysis and generation steps.")
+                    print("Fix the video analysis and generation issues first, then this endpoint should work correctly.")
+            
             return False
 
 if __name__ == "__main__":
