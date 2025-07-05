@@ -450,93 +450,143 @@ async def process_video_generation(project_id: str):
 
 # API Routes
 @api_router.post("/projects", response_model=VideoProject)
-async def create_project(input: VideoProjectCreate):
+async def create_project(input: VideoProjectCreate, user_id: str = Depends(get_current_user)):
     """Create a new video project"""
-    project = VideoProject(**input.dict())
+    # Use authenticated user ID if available, otherwise use provided user_id for backwards compatibility
+    project_user_id = user_id if user_id else input.user_id
+    
+    project_data = input.dict()
+    project_data['user_id'] = project_user_id
+    project = VideoProject(**project_data)
     await db.video_projects.insert_one(project.dict())
     return project
 
 @api_router.post("/projects/{project_id}/upload-sample")
-async def upload_sample_video(project_id: str, file: UploadFile = File(...)):
+async def upload_sample_video(project_id: str, file: UploadFile = File(...), user_id: str = Depends(get_current_user)):
     """Upload sample video for analysis"""
     try:
         # Validate file
         if not file.content_type.startswith("video/"):
             raise HTTPException(status_code=400, detail="File must be a video")
         
-        # Save uploaded file
-        file_path = UPLOAD_DIR / f"{project_id}_sample.mp4"
+        # Read file content
+        content = await file.read()
         
-        async with aiofiles.open(file_path, "wb") as f:
-            content = await file.read()
-            await f.write(content)
+        # Get project to verify ownership
+        project_doc = await db.video_projects.find_one({"id": project_id})
+        if not project_doc:
+            raise HTTPException(status_code=404, detail="Project not found")
+        
+        # If user is authenticated, verify ownership
+        if user_id and project_doc.get('user_id') != user_id:
+            raise HTTPException(status_code=403, detail="Not authorized to access this project")
+        
+        # Upload to cloud storage
+        file_url = await cloud_storage_service.upload_file(
+            content, 
+            project_doc.get('user_id', 'anonymous'), 
+            project_id, 
+            'input', 
+            file.filename, 
+            file.content_type
+        )
         
         # Update project
         await db.video_projects.update_one(
             {"id": project_id},
             {
                 "$set": {
-                    "sample_video_path": str(file_path),
+                    "sample_video_path": file_url,
                     "status": VideoStatus.ANALYZING
                 }
             }
         )
         
-        return {"message": "Sample video uploaded successfully"}
+        return {"message": "Sample video uploaded successfully", "file_url": file_url}
         
     except Exception as e:
         logger.error(f"Error uploading sample video: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.post("/projects/{project_id}/upload-character")
-async def upload_character_image(project_id: str, file: UploadFile = File(...)):
+async def upload_character_image(project_id: str, file: UploadFile = File(...), user_id: str = Depends(get_current_user)):
     """Upload character image (optional)"""
     try:
         # Validate file
         if not file.content_type.startswith("image/"):
             raise HTTPException(status_code=400, detail="File must be an image")
         
-        # Save uploaded file
-        file_path = UPLOAD_DIR / f"{project_id}_character.jpg"
+        # Read file content
+        content = await file.read()
         
-        async with aiofiles.open(file_path, "wb") as f:
-            content = await file.read()
-            await f.write(content)
+        # Get project to verify ownership
+        project_doc = await db.video_projects.find_one({"id": project_id})
+        if not project_doc:
+            raise HTTPException(status_code=404, detail="Project not found")
+        
+        # If user is authenticated, verify ownership
+        if user_id and project_doc.get('user_id') != user_id:
+            raise HTTPException(status_code=403, detail="Not authorized to access this project")
+        
+        # Upload to cloud storage
+        file_url = await cloud_storage_service.upload_file(
+            content, 
+            project_doc.get('user_id', 'anonymous'), 
+            project_id, 
+            'input', 
+            file.filename, 
+            file.content_type
+        )
         
         # Update project
         await db.video_projects.update_one(
             {"id": project_id},
-            {"$set": {"character_image_path": str(file_path)}}
+            {"$set": {"character_image_path": file_url}}
         )
         
-        return {"message": "Character image uploaded successfully"}
+        return {"message": "Character image uploaded successfully", "file_url": file_url}
         
     except Exception as e:
         logger.error(f"Error uploading character image: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.post("/projects/{project_id}/upload-audio")
-async def upload_audio(project_id: str, file: UploadFile = File(...)):
+async def upload_audio(project_id: str, file: UploadFile = File(...), user_id: str = Depends(get_current_user)):
     """Upload audio file (optional)"""
     try:
         # Validate file
         if not file.content_type.startswith("audio/"):
             raise HTTPException(status_code=400, detail="File must be an audio file")
         
-        # Save uploaded file
-        file_path = UPLOAD_DIR / f"{project_id}_audio.mp3"
+        # Read file content
+        content = await file.read()
         
-        async with aiofiles.open(file_path, "wb") as f:
-            content = await file.read()
-            await f.write(content)
+        # Get project to verify ownership
+        project_doc = await db.video_projects.find_one({"id": project_id})
+        if not project_doc:
+            raise HTTPException(status_code=404, detail="Project not found")
+        
+        # If user is authenticated, verify ownership
+        if user_id and project_doc.get('user_id') != user_id:
+            raise HTTPException(status_code=403, detail="Not authorized to access this project")
+        
+        # Upload to cloud storage
+        file_url = await cloud_storage_service.upload_file(
+            content, 
+            project_doc.get('user_id', 'anonymous'), 
+            project_id, 
+            'input', 
+            file.filename, 
+            file.content_type
+        )
         
         # Update project
         await db.video_projects.update_one(
             {"id": project_id},
-            {"$set": {"audio_path": str(file_path)}}
+            {"$set": {"audio_path": file_url}}
         )
         
-        return {"message": "Audio file uploaded successfully"}
+        return {"message": "Audio file uploaded successfully", "file_url": file_url}
         
     except Exception as e:
         logger.error(f"Error uploading audio file: {str(e)}")
