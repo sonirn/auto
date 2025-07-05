@@ -400,7 +400,7 @@ class BackendTest(unittest.TestCase):
             
             if has_valid_analysis and has_valid_plan:
                 print("✅ Video generation API works with valid analysis and plan")
-                print("✅ The emergentintegrations fix has enabled the full video generation pipeline!")
+                print("✅ The fix to the video analysis endpoint has unblocked the video generation workflow!")
             else:
                 print("✅ Video generation API works (but may fail later due to missing analysis/plan)")
             
