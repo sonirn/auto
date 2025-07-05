@@ -641,7 +641,7 @@ async def chat_with_plan(project_id: str, chat_request: ChatMessage):
             
             response = await asyncio.to_thread(
                 litellm.completion,
-                model="groq/llama3-70b-8192",
+                model="groq/llama-3-70b-8192",
                 messages=messages,
                 api_key=os.environ['GROQ_API_KEY']
             )
