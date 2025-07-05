@@ -154,6 +154,10 @@ class VideoProject(BaseModel):
 class VideoProjectCreate(BaseModel):
     user_id: str
 
+class AuthRequest(BaseModel):
+    email: str
+    password: str
+
 class VideoAnalysisResponse(BaseModel):
     analysis: Dict[str, Any]
     plan: Dict[str, Any]
