@@ -752,11 +752,7 @@ async def upload_sample_video(project_id: str, file: UploadFile = File(...), use
         if not project_doc:
             raise HTTPException(status_code=404, detail="Project not found or access denied")
         
-        # If user is authenticated, verify ownership
-        if user_id and project_doc.get('user_id') != user_id:
-            raise HTTPException(status_code=403, detail="Not authorized to access this project")
-        
-        # Upload to cloud storage
+        # Store the uploaded file
         file_url = await cloud_storage_service.upload_file(
             content, 
             project_doc.get('user_id', 'anonymous'), 
