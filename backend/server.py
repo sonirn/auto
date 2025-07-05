@@ -200,7 +200,7 @@ Return your analysis in JSON format."""
                 
                 response = await asyncio.to_thread(
                     litellm.completion,
-                    model="google/gemini-1.5-pro",
+                    model="gemini/gemini-1.5-pro",
                     messages=messages,
                     api_key=self.api_key
                 )
