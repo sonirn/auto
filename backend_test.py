@@ -264,8 +264,8 @@ class BackendTest(unittest.TestCase):
         url = f"{API_URL}/projects/{BackendTest.project_id}/analyze"
         
         try:
-            print("Testing video analysis with fixed emergentintegrations model format...")
-            print("Current format in server.py: .with_model(\"google\", \"gemini-1.5-pro\")")
+            print("Testing video analysis with litellm + Groq approach...")
+            print("Current implementation in server.py: Using litellm with groq/llama3-8b-8192 model")
             
             response = requests.post(url)
             response.raise_for_status()
@@ -285,13 +285,13 @@ class BackendTest(unittest.TestCase):
                     BackendTest.analysis_data = data["analysis"]
                     BackendTest.plan_data = data["plan"]
                     
-                    print("✅ Video analysis API works with text-only analysis (file attachments disabled)")
-                    print("✅ The emergentintegrations fix for model format (\"google\", \"gemini-1.5-pro\") has resolved the issue!")
+                    print("✅ Video analysis API works with text-only analysis")
+                    print("✅ The fix to use litellm with Groq has resolved the emergentintegrations issues!")
                     return True
             
             print("Video analysis completed successfully")
-            print("✅ Video analysis API works with corrected Gemini provider format (\"google\", \"gemini-1.5-pro\")")
-            print("✅ The emergentintegrations fix has resolved the \"LLM Provider NOT provided\" error!")
+            print("✅ Video analysis API works with litellm + Groq approach")
+            print("✅ The fix to remove emergentintegrations fallback code has resolved the issues!")
             
             # Store analysis and plan for other tests
             BackendTest.analysis_data = data.get("analysis", {})
@@ -301,15 +301,16 @@ class BackendTest(unittest.TestCase):
         except Exception as e:
             print(f"❌ Video analysis API failed: {str(e)}")
             
-            # Check for specific error about Gemini provider
+            # Check for specific error messages
             if "File attachments are only supported with Gemini provider" in str(e):
-                print("\nDETAILED ERROR: The error suggests that the code is trying to use a provider other than Gemini for file attachments.")
-                print("In server.py, the VideoAnalysisService is configured to use Gemini (line 152), but there might be an issue with how the provider is being used.")
-                print("This could be due to a conflict in the emergentintegrations package or how it's being initialized.")
+                print("\nDETAILED ERROR: The error suggests that the code is still trying to use file attachments with a non-Gemini provider.")
+                print("The fix to use litellm with Groq may not be properly implemented or there might be remaining emergentintegrations code.")
             elif "LLM Provider NOT provided" in str(e):
-                print("\nDETAILED ERROR: The error suggests that the emergentintegrations package is not recognizing the provider format.")
-                print("The code is using (\"google\", \"gemini-1.5-pro\") as the provider format, but the package might still be having issues.")
-                print("The fix for the model format has not resolved the issue. Further investigation is needed.")
+                print("\nDETAILED ERROR: The error suggests that there might still be issues with the model provider format.")
+                print("Check if the emergentintegrations code has been completely removed and if litellm is being used correctly.")
+            elif "AuthenticationError" in str(e):
+                print("\nDETAILED ERROR: The error suggests an issue with the API key authentication.")
+                print("Check the GROQ_API_KEY in the .env file and make sure it's being used correctly in the VideoAnalysisService.")
             
             return False
     
