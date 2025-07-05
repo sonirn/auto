@@ -608,7 +608,7 @@ async def chat_with_plan(project_id: str, chat_request: ChatMessage):
             
             The user wants to make changes to this plan. Listen to their requests and provide an updated plan.
             Always return your response in JSON format with 'response' and 'updated_plan' keys."""
-        ).with_model("groq", "llama3-70b-8192")  # Correct format: provider, model
+        ).with_model(provider="groq", model="llama3-70b-8192")  # Correct format with explicit parameter names
 
         # Send user message
         user_message = UserMessage(text=chat_request.message)
