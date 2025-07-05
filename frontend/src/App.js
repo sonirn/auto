@@ -344,12 +344,12 @@ const App = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">
+        {/* Header - Mobile Optimized */}
+        <div className="text-center mb-6 md:mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
             🎬 AI Video Generator
           </h1>
-          <p className="text-gray-300">
+          <p className="text-gray-300 text-sm md:text-base px-4">
             Upload a sample video and let AI create a similar one for you
           </p>
         </div>
