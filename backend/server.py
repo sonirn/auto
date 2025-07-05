@@ -552,9 +552,179 @@ async def process_video_generation(project_id: str):
             }
         )
 
+# Authentication Routes
+@api_router.post("/auth/register")
+async def register_user(email: str, password: str):
+    """Register a new user with Supabase"""
+    try:
+        import httpx
+        
+        # Register with Supabase
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{os.environ['SUPABASE_URL']}/auth/v1/signup",
+                headers={
+                    "apikey": os.environ['SUPABASE_KEY'],
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "email": email,
+                    "password": password
+                }
+            )
+            
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Registration failed: {response.text}"
+                )
+            
+            data = response.json()
+            
+            # Create user record in our database
+            user_data = {
+                "id": data["user"]["id"],
+                "email": email,
+                "created_at": datetime.utcnow(),
+                "last_login": datetime.utcnow(),
+                "projects": [],
+                "subscription_status": "free"
+            }
+            
+            await db.users.insert_one(user_data)
+            
+            return {
+                "message": "User registered successfully",
+                "user": {
+                    "id": data["user"]["id"],
+                    "email": email
+                },
+                "access_token": data["access_token"]
+            }
+            
+    except Exception as e:
+        logger.error(f"Registration error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/auth/login")
+async def login_user(email: str, password: str):
+    """Login user with Supabase"""
+    try:
+        import httpx
+        
+        # Login with Supabase
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{os.environ['SUPABASE_URL']}/auth/v1/token?grant_type=password",
+                headers={
+                    "apikey": os.environ['SUPABASE_KEY'],
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "email": email,
+                    "password": password
+                }
+            )
+            
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=401, 
+                    detail=f"Login failed: {response.text}"
+                )
+            
+            data = response.json()
+            
+            # Update last login in our database
+            await db.users.update_one(
+                {"id": data["user"]["id"]},
+                {"$set": {"last_login": datetime.utcnow()}}
+            )
+            
+            return {
+                "message": "Login successful",
+                "user": {
+                    "id": data["user"]["id"],
+                    "email": data["user"]["email"]
+                },
+                "access_token": data["access_token"]
+            }
+            
+    except Exception as e:
+        logger.error(f"Login error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/auth/logout")
+async def logout_user(user_id: str = Depends(require_auth)):
+    """Logout user (mainly for frontend state management)"""
+    return {"message": "Logout successful"}
+
+@api_router.get("/auth/me")
+async def get_current_user_info(user_id: str = Depends(require_auth)):
+    """Get current user information"""
+    try:
+        user_doc = await db.users.find_one({"id": user_id})
+        if not user_doc:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Get user's projects
+        projects = await db.video_projects.find({"user_id": user_id}).to_list(None)
+        
+        return {
+            "id": user_doc["id"],
+            "email": user_doc["email"],
+            "created_at": user_doc["created_at"],
+            "subscription_status": user_doc.get("subscription_status", "free"),
+            "projects": len(projects)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting user info: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# User Management Routes
+@api_router.get("/projects")
+async def list_user_projects(user_id: str = Depends(require_auth)):
+    """List all projects for the authenticated user"""
+    try:
+        projects = await db.video_projects.find({"user_id": user_id}).to_list(None)
+        return {"projects": projects}
+        
+    except Exception as e:
+        logger.error(f"Error listing projects: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.delete("/projects/{project_id}")
+async def delete_project(project_id: str, user_id: str = Depends(require_auth)):
+    """Delete a user's project"""
+    try:
+        # Check if project exists and belongs to user
+        project_doc = await db.video_projects.find_one({"id": project_id, "user_id": user_id})
+        if not project_doc:
+            raise HTTPException(status_code=404, detail="Project not found or access denied")
+        
+        # Delete associated files
+        project = VideoProject(**project_doc)
+        if project.sample_video_path:
+            await cloud_storage_service.delete_file(project.sample_video_path)
+        if project.character_image_path:
+            await cloud_storage_service.delete_file(project.character_image_path)
+        if project.audio_path:
+            await cloud_storage_service.delete_file(project.audio_path)
+        if project.generated_video_path:
+            await cloud_storage_service.delete_file(project.generated_video_path)
+        
+        # Delete project from database
+        await db.video_projects.delete_one({"id": project_id})
+        
+        return {"message": "Project deleted successfully"}
+        
+    except Exception as e:
+        logger.error(f"Error deleting project: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # API Routes
 @api_router.post("/projects", response_model=VideoProject)
-async def create_project(input: VideoProjectCreate, user_id: str = Depends(get_current_user)):
+async def create_project(input: VideoProjectCreate, user_id: str = Depends(require_auth)):
     """Create a new video project"""
     # Use authenticated user ID if available, otherwise use provided user_id for backwards compatibility
     project_user_id = user_id if user_id else input.user_id
