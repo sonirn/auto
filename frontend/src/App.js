@@ -707,4 +707,13 @@ const AppContent = () => {
   );
 };
 
+// Main App Component with Auth Provider
+const App = () => {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+};
+
 export default App;
