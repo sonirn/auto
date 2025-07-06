@@ -135,11 +135,12 @@ const FileUpload = ({ onFileSelect, accept, label, icon }) => {
   );
 };
 
-// Chat Component
+// Chat Component (Updated to use authentication)
 const ChatInterface = ({ projectId, onPlanUpdate }) => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { getAuthenticatedAxios } = useAuth();
 
   const sendMessage = async () => {
     if (!inputMessage.trim()) return;
@@ -149,10 +150,10 @@ const ChatInterface = ({ projectId, onPlanUpdate }) => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post(`${API}/projects/${projectId}/chat`, {
+      const axiosInstance = getAuthenticatedAxios();
+      const response = await axiosInstance.post(`${API}/projects/${projectId}/chat`, {
         project_id: projectId,
-        message: inputMessage,
-        user_id: 'user123'
+        message: inputMessage
       });
 
       const aiMessage = { text: response.data.response, sender: 'ai' };
