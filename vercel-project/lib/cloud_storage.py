@@ -26,7 +26,8 @@ class CloudStorageService:
         """Initialize S3 client for Cloudflare R2"""
         try:
             if not all([self.account_id, self.access_key_id, self.secret_access_key, self.bucket_name]):
-                raise ValueError("Missing required R2 credentials")
+                logger.warning("Missing required R2 credentials, cloud storage will not be available")
+                return
                 
             self.client = boto3.client(
                 's3',
@@ -40,7 +41,7 @@ class CloudStorageService:
             
         except Exception as e:
             logger.error(f"Failed to initialize R2 client: {e}")
-            raise
+            self.client = None
     
     def upload_file_sync(self, content: bytes, user_id: str, project_id: str, 
                         folder: str, filename: str, content_type: str) -> str:
