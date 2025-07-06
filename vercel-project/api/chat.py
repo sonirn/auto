@@ -3,128 +3,152 @@ import json
 import sys
 import os
 from datetime import datetime
-from http.server import BaseHTTPRequestHandler
-import litellm
 
-# Add lib directory to path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lib'))
-
-from database import get_collection
-from auth import auth_service
-
-class handler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        """Handle chat request"""
-        try:
-            # Get authorization header
-            auth_header = self.headers.get('Authorization')
-            user_id = auth_service.get_current_user(auth_header)
-            
-            if not user_id:
-                self.send_error(401, "Authentication required")
-                return
-            
-            # Get project ID from URL path
-            path_parts = self.path.split('/')
-            if len(path_parts) < 3:
-                self.send_error(400, "Project ID required")
-                return
-            
-            project_id = path_parts[2]
-            
-            # Read request body
-            content_length = int(self.headers.get('Content-Length', 0))
-            if content_length == 0:
-                self.send_error(400, "Message is required")
-                return
-            
-            post_data = self.rfile.read(content_length)
-            request_data = json.loads(post_data.decode())
-            message = request_data.get('message', '')
-            
-            if not message:
-                self.send_error(400, "Message is required")
-                return
-            
-            # Get project from database
-            collection = get_collection('video_projects')
-            project = collection.find_one({"_id": project_id, "user_id": user_id})
-            
-            if not project:
-                self.send_error(404, "Project not found")
-                return
-            
-            # Get current generation plan
-            generation_plan = project.get('generation_plan', {})
-            
-            # Create chat context
-            context = f"""
-            You are an AI assistant helping to modify video generation plans.
-            
-            Current generation plan:
-            {json.dumps(generation_plan, indent=2)}
-            
-            User message: {message}
-            
-            Please provide a helpful response about modifying the generation plan.
-            If the user wants to change something specific, provide updated plan suggestions.
-            Keep your response concise and focused on video generation.
-            """
-            
-            # Call Groq LLM
-            groq_api_key = os.environ.get('GROQ_API_KEY')
-            if not groq_api_key:
-                self.send_error(500, "AI service not configured")
-                return
-            
-            os.environ['GROQ_API_KEY'] = groq_api_key
-            
-            response = litellm.completion(
-                model="groq/llama3-8b-8192",
-                messages=[{"role": "user", "content": context}],
-                temperature=0.7,
-                max_tokens=1000
-            )
-            
-            ai_response = response.choices[0].message.content
-            
-            # Update chat history
-            chat_history = project.get('chat_history', [])
-            chat_history.append({
-                "user_message": message,
-                "ai_response": ai_response,
-                "timestamp": datetime.utcnow().isoformat()
-            })
-            
-            # Update project in database
-            collection.update_one(
-                {"_id": project_id},
-                {"$set": {
-                    "chat_history": chat_history,
-                    "updated_at": datetime.utcnow().isoformat()
-                }}
-            )
-            
-            # Send response
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.end_headers()
-            
-            response_data = {
+def handler(request):
+    """Handle chat request"""
+    try:
+        method = request.get('method', 'POST')
+        headers = request.get('headers', {})
+        query = request.get('query', {})
+        body = request.get('body', {})
+        
+        # Handle CORS
+        cors_headers = {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'Content-Type': 'application/json'
+        }
+        
+        if method == 'OPTIONS':
+            return {
+                'statusCode': 200,
+                'headers': cors_headers,
+                'body': ''
+            }
+        
+        if method != 'POST':
+            return {
+                'statusCode': 405,
+                'headers': cors_headers,
+                'body': json.dumps({'error': 'Method not allowed'})
+            }
+        
+        # Import here to avoid top-level imports
+        sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lib'))
+        
+        from database import get_collection_sync
+        from auth import auth_service
+        
+        # Get authorization header
+        auth_header = headers.get('authorization') or headers.get('Authorization')
+        user_id = auth_service.get_current_user(auth_header)
+        
+        if not user_id:
+            return {
+                'statusCode': 401,
+                'headers': cors_headers,
+                'body': json.dumps({'error': 'Authentication required'})
+            }
+        
+        # Get project ID and message from query or body
+        project_id = query.get('project_id') or body.get('project_id')
+        message = body.get('message', '')
+        
+        if not project_id:
+            return {
+                'statusCode': 400,
+                'headers': cors_headers,
+                'body': json.dumps({'error': 'Project ID required'})
+            }
+        
+        if not message:
+            return {
+                'statusCode': 400,
+                'headers': cors_headers,
+                'body': json.dumps({'error': 'Message is required'})
+            }
+        
+        # Get project from database
+        collection = get_collection_sync('video_projects')
+        project = collection.find_one({"_id": project_id, "user_id": user_id})
+        
+        if not project:
+            return {
+                'statusCode': 404,
+                'headers': cors_headers,
+                'body': json.dumps({'error': 'Project not found'})
+            }
+        
+        # Get current generation plan
+        generation_plan = project.get('generation_plan', {})
+        
+        # Create chat context
+        context = f"""
+        You are an AI assistant helping to modify video generation plans.
+        
+        Current generation plan:
+        {json.dumps(generation_plan, indent=2)}
+        
+        User message: {message}
+        
+        Please provide a helpful response about modifying the generation plan.
+        If the user wants to change something specific, provide updated plan suggestions.
+        Keep your response concise and focused on video generation.
+        """
+        
+        # Call Groq LLM
+        groq_api_key = os.environ.get('GROQ_API_KEY')
+        if not groq_api_key:
+            return {
+                'statusCode': 500,
+                'headers': cors_headers,
+                'body': json.dumps({'error': 'AI service not configured'})
+            }
+        
+        import litellm
+        os.environ['GROQ_API_KEY'] = groq_api_key
+        
+        # Use synchronous completion for Vercel
+        response = litellm.completion(
+            model="groq/llama3-8b-8192",
+            messages=[{"role": "user", "content": context}],
+            temperature=0.7,
+            max_tokens=1000
+        )
+        
+        ai_response = response.choices[0].message.content
+        
+        # Update chat history
+        chat_history = project.get('chat_history', [])
+        chat_history.append({
+            "user_message": message,
+            "ai_response": ai_response,
+            "timestamp": datetime.utcnow().isoformat()
+        })
+        
+        # Update project in database
+        collection.update_one(
+            {"_id": project_id},
+            {"$set": {
+                "chat_history": chat_history,
+                "updated_at": datetime.utcnow().isoformat()
+            }}
+        )
+        
+        return {
+            'statusCode': 200,
+            'headers': cors_headers,
+            'body': json.dumps({
                 "message": ai_response,
                 "project_id": project_id,
                 "timestamp": datetime.utcnow().isoformat()
-            }
-            self.wfile.write(json.dumps(response_data).encode())
-            
-        except Exception as e:
-            self.send_error(500, f"Internal server error: {str(e)}")
-    
-    def do_OPTIONS(self):
-        """Handle CORS preflight requests"""
-        self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-        self.end_headers()
+            })
+        }
+        
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'headers': {'Content-Type': 'application/json'},
+            'body': json.dumps({'error': f'Internal server error: {str(e)}'})
+        }

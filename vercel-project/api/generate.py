@@ -3,128 +3,155 @@ import json
 import sys
 import os
 from datetime import datetime
-from http.server import BaseHTTPRequestHandler
 
-# Add lib directory to path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lib'))
-
-from database import get_collection, PROJECT_STATUS
-from auth import auth_service
-from video_generation import VideoGenerationService, VideoModel
-
-class handler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        """Handle video generation request"""
-        try:
-            # Get authorization header
-            auth_header = self.headers.get('Authorization')
-            user_id = auth_service.get_current_user(auth_header)
-            
-            if not user_id:
-                self.send_error(401, "Authentication required")
-                return
-            
-            # Get project ID from URL path
-            path_parts = self.path.split('/')
-            if len(path_parts) < 3:
-                self.send_error(400, "Project ID required")
-                return
-            
-            project_id = path_parts[2]
-            
-            # Read request body
-            content_length = int(self.headers.get('Content-Length', 0))
-            if content_length > 0:
-                post_data = self.rfile.read(content_length)
-                try:
-                    request_data = json.loads(post_data.decode())
-                    selected_model = request_data.get('model', 'runwayml_gen4')
-                except:
-                    selected_model = 'runwayml_gen4'
-            else:
-                selected_model = 'runwayml_gen4'
-            
-            # Get project from database
-            collection = get_collection('video_projects')
-            project = collection.find_one({"_id": project_id, "user_id": user_id})
-            
-            if not project:
-                self.send_error(404, "Project not found")
-                return
-            
-            # Check if generation plan exists
-            generation_plan = project.get('generation_plan')
-            if not generation_plan:
-                self.send_error(400, "No generation plan available. Please analyze video first.")
-                return
-            
-            # Update project status
-            collection.update_one(
-                {"_id": project_id},
-                {"$set": {
-                    "status": PROJECT_STATUS["GENERATING"],
-                    "progress": 60.0,
-                    "selected_model": selected_model,
-                    "updated_at": datetime.utcnow().isoformat()
-                }}
-            )
-            
-            # Initialize video generation service
-            generation_service = VideoGenerationService()
-            
-            # Convert model string to enum
-            model_mapping = {
-                'runwayml_gen4': VideoModel.RUNWAYML_GEN4,
-                'runwayml_gen3': VideoModel.RUNWAYML_GEN3,
-                'google_veo2': VideoModel.GOOGLE_VEO2,
-                'google_veo3': VideoModel.GOOGLE_VEO3
+def handler(request):
+    """Handle video generation request"""
+    try:
+        method = request.get('method', 'POST')
+        headers = request.get('headers', {})
+        query = request.get('query', {})
+        body = request.get('body', {})
+        
+        # Handle CORS
+        cors_headers = {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'Content-Type': 'application/json'
+        }
+        
+        if method == 'OPTIONS':
+            return {
+                'statusCode': 200,
+                'headers': cors_headers,
+                'body': ''
             }
-            
-            model_enum = model_mapping.get(selected_model, VideoModel.RUNWAYML_GEN4)
-            
-            # Start generation
-            generation_result = generation_service.generate_video(
-                project_id=project_id,
-                generation_plan=generation_plan,
-                model=model_enum
-            )
-            
-            # Update project with generation info
-            update_data = {
-                "status": PROJECT_STATUS["PROCESSING"],
-                "progress": 70.0,
-                "generation_id": generation_result.get('generation_id'),
-                "estimated_time_remaining": generation_result.get('estimated_time', 120),
+        
+        if method != 'POST':
+            return {
+                'statusCode': 405,
+                'headers': cors_headers,
+                'body': json.dumps({'error': 'Method not allowed'})
+            }
+        
+        # Import here to avoid top-level imports
+        sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lib'))
+        
+        from database import get_collection_sync, PROJECT_STATUS
+        from auth import auth_service
+        from video_generation import VideoGenerationService, VideoModel
+        
+        # Get authorization header
+        auth_header = headers.get('authorization') or headers.get('Authorization')
+        user_id = auth_service.get_current_user(auth_header)
+        
+        if not user_id:
+            return {
+                'statusCode': 401,
+                'headers': cors_headers,
+                'body': json.dumps({'error': 'Authentication required'})
+            }
+        
+        # Get project ID and model from query or body
+        project_id = query.get('project_id') or body.get('project_id')
+        selected_model = body.get('model', 'runwayml_gen4')
+        
+        if not project_id:
+            return {
+                'statusCode': 400,
+                'headers': cors_headers,
+                'body': json.dumps({'error': 'Project ID required'})
+            }
+        
+        # Get project from database
+        collection = get_collection_sync('video_projects')
+        project = collection.find_one({"_id": project_id, "user_id": user_id})
+        
+        if not project:
+            return {
+                'statusCode': 404,
+                'headers': cors_headers,
+                'body': json.dumps({'error': 'Project not found'})
+            }
+        
+        # Check if generation plan exists
+        generation_plan = project.get('generation_plan')
+        if not generation_plan:
+            return {
+                'statusCode': 400,
+                'headers': cors_headers,
+                'body': json.dumps({'error': 'No generation plan available. Please analyze video first.'})
+            }
+        
+        # Update project status
+        collection.update_one(
+            {"_id": project_id},
+            {"$set": {
+                "status": PROJECT_STATUS["GENERATING"],
+                "progress": 60.0,
+                "selected_model": selected_model,
                 "updated_at": datetime.utcnow().isoformat()
-            }
+            }}
+        )
+        
+        # Initialize video generation service
+        generation_service = VideoGenerationService()
+        
+        # Convert model string to enum
+        model_mapping = {
+            'runwayml_gen4': VideoModel.RUNWAYML_GEN4,
+            'runwayml_gen3': VideoModel.RUNWAYML_GEN3,
+            'google_veo2': VideoModel.GOOGLE_VEO2,
+            'google_veo3': VideoModel.GOOGLE_VEO3
+        }
+        
+        model_enum = model_mapping.get(selected_model, VideoModel.RUNWAYML_GEN4)
+        
+        # Start generation (async call in sync context)
+        import asyncio
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
             
-            collection.update_one(
-                {"_id": project_id},
-                {"$set": update_data}
+            generation_result = loop.run_until_complete(
+                generation_service.generate_video(
+                    project_id=project_id,
+                    generation_plan=generation_plan,
+                    model=model_enum
+                )
             )
-            
-            # Send response
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.end_headers()
-            
-            response = {
+        finally:
+            loop.close()
+        
+        # Update project with generation info
+        update_data = {
+            "status": PROJECT_STATUS["PROCESSING"],
+            "progress": 70.0,
+            "generation_id": generation_result.get('generation_id'),
+            "estimated_time_remaining": generation_result.get('estimated_time', 120),
+            "updated_at": datetime.utcnow().isoformat()
+        }
+        
+        collection.update_one(
+            {"_id": project_id},
+            {"$set": update_data}
+        )
+        
+        return {
+            'statusCode': 200,
+            'headers': cors_headers,
+            'body': json.dumps({
                 "message": "Video generation started successfully",
                 "generation_id": generation_result.get('generation_id'),
                 "model": selected_model,
                 "estimated_time": generation_result.get('estimated_time', 120),
                 "project_id": project_id
-            }
-            self.wfile.write(json.dumps(response).encode())
-            
-        except Exception as e:
-            self.send_error(500, f"Internal server error: {str(e)}")
-    
-    def do_OPTIONS(self):
-        """Handle CORS preflight requests"""
-        self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-        self.end_headers()
+            })
+        }
+        
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'headers': {'Content-Type': 'application/json'},
+            'body': json.dumps({'error': f'Internal server error: {str(e)}'})
+        }
