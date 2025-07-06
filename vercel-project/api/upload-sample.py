@@ -101,24 +101,15 @@ def handler(request):
                 'body': json.dumps({'error': 'File too large. Maximum size is 100MB.'})
             }
         
-        # Upload to cloud storage (async call in sync context)
-        import asyncio
-        try:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            
-            file_url = loop.run_until_complete(
-                cloud_storage_service.upload_file(
-                    content=file_data,
-                    user_id=user_id,
-                    project_id=project_id,
-                    folder='input',
-                    filename=filename,
-                    content_type=content_type
-                )
-            )
-        finally:
-            loop.close()
+        # Upload to cloud storage
+        file_url = cloud_storage_service.upload_file_sync(
+            content=file_data,
+            user_id=user_id,
+            project_id=project_id,
+            folder='input',
+            filename=filename,
+            content_type=content_type
+        )
         
         # Update project in database
         collection = get_collection_sync('video_projects')
