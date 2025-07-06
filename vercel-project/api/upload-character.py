@@ -4,114 +4,154 @@ import base64
 import sys
 import os
 from datetime import datetime
-from http.server import BaseHTTPRequestHandler
 
-# Add lib directory to path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lib'))
-
-from database import get_collection
-from auth import auth_service
-from cloud_storage import cloud_storage_service
-
-class handler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        """Handle character image upload"""
-        try:
-            # Get authorization header
-            auth_header = self.headers.get('Authorization')
-            user_id = auth_service.get_current_user(auth_header)
-            
-            if not user_id:
-                self.send_error(401, "Authentication required")
-                return
-            
-            # Get project ID from URL path
-            path_parts = self.path.split('/')
-            if len(path_parts) < 3:
-                self.send_error(400, "Project ID required")
-                return
-            
-            project_id = path_parts[2]
-            
-            # Read request body
-            content_length = int(self.headers.get('Content-Length', 0))
-            if content_length == 0:
-                self.send_error(400, "No file data provided")
-                return
-            
-            post_data = self.rfile.read(content_length)
-            
-            # Parse multipart form data (simplified)
-            try:
-                # For now, assume the file is sent as base64 in JSON
-                request_data = json.loads(post_data.decode())
-                file_data = base64.b64decode(request_data.get('file_data', ''))
-                filename = request_data.get('filename', 'character_image.jpg')
-                content_type = request_data.get('content_type', 'image/jpeg')
-            except:
-                # Fallback: treat as raw file data
-                file_data = post_data
-                filename = 'character_image.jpg'
-                content_type = 'image/jpeg'
-            
-            # Validate file type
-            allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
-            if content_type not in allowed_types:
-                self.send_error(400, "Invalid file type. Only image files are allowed.")
-                return
-            
-            # Validate file size (max 10MB)
-            max_size = 10 * 1024 * 1024  # 10MB
-            if len(file_data) > max_size:
-                self.send_error(400, "File too large. Maximum size is 10MB.")
-                return
-            
-            # Upload to cloud storage
-            file_url = cloud_storage_service.upload_file(
-                content=file_data,
-                user_id=user_id,
-                project_id=project_id,
-                folder='input',
-                filename=filename,
-                content_type=content_type
-            )
-            
-            # Update project in database
-            collection = get_collection('video_projects')
-            update_data = {
-                "character_image_path": file_url,
-                "updated_at": datetime.utcnow().isoformat()
+def handler(request):
+    """Handle character image upload"""
+    try:
+        method = request.get('method', 'POST')
+        headers = request.get('headers', {})
+        query = request.get('query', {})
+        body = request.get('body', {})
+        
+        # Handle CORS
+        cors_headers = {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'Content-Type': 'application/json'
+        }
+        
+        if method == 'OPTIONS':
+            return {
+                'statusCode': 200,
+                'headers': cors_headers,
+                'body': ''
             }
+        
+        if method != 'POST':
+            return {
+                'statusCode': 405,
+                'headers': cors_headers,
+                'body': json.dumps({'error': 'Method not allowed'})
+            }
+        
+        # Import here to avoid top-level imports
+        sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lib'))
+        
+        from database import get_collection_sync
+        from auth import auth_service
+        from cloud_storage import cloud_storage_service
+        
+        # Get authorization header
+        auth_header = headers.get('authorization') or headers.get('Authorization')
+        user_id = auth_service.get_current_user(auth_header)
+        
+        if not user_id:
+            return {
+                'statusCode': 401,
+                'headers': cors_headers,
+                'body': json.dumps({'error': 'Authentication required'})
+            }
+        
+        # Get project ID from query or body
+        project_id = query.get('project_id') or body.get('project_id')
+        if not project_id:
+            return {
+                'statusCode': 400,
+                'headers': cors_headers,
+                'body': json.dumps({'error': 'Project ID required'})
+            }
+        
+        # Get file data from body
+        file_data_b64 = body.get('file_data')
+        filename = body.get('filename', 'character_image.jpg')
+        content_type = body.get('content_type', 'image/jpeg')
+        
+        if not file_data_b64:
+            return {
+                'statusCode': 400,
+                'headers': cors_headers,
+                'body': json.dumps({'error': 'No file data provided'})
+            }
+        
+        try:
+            file_data = base64.b64decode(file_data_b64)
+        except:
+            return {
+                'statusCode': 400,
+                'headers': cors_headers,
+                'body': json.dumps({'error': 'Invalid file data format'})
+            }
+        
+        # Validate file type
+        allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+        if content_type not in allowed_types:
+            return {
+                'statusCode': 400,
+                'headers': cors_headers,
+                'body': json.dumps({'error': 'Invalid file type. Only image files are allowed.'})
+            }
+        
+        # Validate file size (max 10MB)
+        max_size = 10 * 1024 * 1024  # 10MB
+        if len(file_data) > max_size:
+            return {
+                'statusCode': 400,
+                'headers': cors_headers,
+                'body': json.dumps({'error': 'File too large. Maximum size is 10MB.'})
+            }
+        
+        # Upload to cloud storage (async call in sync context)
+        import asyncio
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
             
-            result = collection.update_one(
-                {"_id": project_id, "user_id": user_id},
-                {"$set": update_data}
+            file_url = loop.run_until_complete(
+                cloud_storage_service.upload_file(
+                    content=file_data,
+                    user_id=user_id,
+                    project_id=project_id,
+                    folder='input',
+                    filename=filename,
+                    content_type=content_type
+                )
             )
-            
-            if result.matched_count == 0:
-                self.send_error(404, "Project not found")
-                return
-            
-            # Send response
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.end_headers()
-            
-            response = {
+        finally:
+            loop.close()
+        
+        # Update project in database
+        collection = get_collection_sync('video_projects')
+        update_data = {
+            "character_image_path": file_url,
+            "updated_at": datetime.utcnow().isoformat()
+        }
+        
+        result = collection.update_one(
+            {"_id": project_id, "user_id": user_id},
+            {"$set": update_data}
+        )
+        
+        if result.matched_count == 0:
+            return {
+                'statusCode': 404,
+                'headers': cors_headers,
+                'body': json.dumps({'error': 'Project not found'})
+            }
+        
+        return {
+            'statusCode': 200,
+            'headers': cors_headers,
+            'body': json.dumps({
                 "message": "Character image uploaded successfully",
                 "file_url": file_url,
                 "project_id": project_id
-            }
-            self.wfile.write(json.dumps(response).encode())
-            
-        except Exception as e:
-            self.send_error(500, f"Internal server error: {str(e)}")
-    
-    def do_OPTIONS(self):
-        """Handle CORS preflight requests"""
-        self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-        self.end_headers()
+            })
+        }
+        
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'headers': {'Content-Type': 'application/json'},
+            'body': json.dumps({'error': f'Internal server error: {str(e)}'})
+        }
