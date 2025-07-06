@@ -33,7 +33,7 @@ def handler(request):
         import os
         sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lib'))
         
-        from database import get_collection, PROJECT_STATUS
+        from database import get_collection_sync, PROJECT_STATUS
         from auth import auth_service
         
         # Get authorization header
@@ -49,7 +49,7 @@ def handler(request):
         
         if method == 'GET':
             # List projects
-            collection = asyncio.run(get_collection('video_projects'))
+            collection = get_collection_sync('video_projects')
             projects = list(collection.find({"user_id": user_id}))
             
             # Convert ObjectId to string for JSON serialization
@@ -76,8 +76,8 @@ def handler(request):
             }
             
             # Save to database
-            collection = asyncio.run(get_collection('video_projects'))
-            asyncio.run(collection.insert_one(project_data))
+            collection = get_collection_sync('video_projects')
+            collection.insert_one(project_data)
             
             return {
                 'statusCode': 201,
@@ -95,8 +95,8 @@ def handler(request):
                     'body': json.dumps({'error': 'Project ID required'})
                 }
             
-            collection = asyncio.run(get_collection('video_projects'))
-            result = asyncio.run(collection.delete_one({"_id": project_id, "user_id": user_id}))
+            collection = get_collection_sync('video_projects')
+            result = collection.delete_one({"_id": project_id, "user_id": user_id})
             
             if result.deleted_count == 0:
                 return {
