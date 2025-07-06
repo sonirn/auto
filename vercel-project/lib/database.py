@@ -1,25 +1,25 @@
 """Database utilities for Vercel serverless functions"""
 import os
 import asyncio
-from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import MongoClient
 from typing import Optional, Dict, Any
 import logging
 
 logger = logging.getLogger(__name__)
 
 # Global database client
-_client: Optional[AsyncIOMotorClient] = None
+_client: Optional[MongoClient] = None
 _database = None
 
 def get_database():
-    """Get MongoDB database instance"""
+    """Get MongoDB database instance (synchronous for Vercel)"""
     global _client, _database
     
     if _database is None:
         mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
         db_name = os.environ.get('DB_NAME', 'video_generation_db')
         
-        _client = AsyncIOMotorClient(mongo_url)
+        _client = MongoClient(mongo_url)
         _database = _client[db_name]
         
         logger.info(f"Connected to MongoDB: {db_name}")
@@ -27,11 +27,16 @@ def get_database():
     return _database
 
 async def get_collection(collection_name: str):
-    """Get MongoDB collection"""
+    """Get MongoDB collection (async wrapper)"""
     db = get_database()
     return db[collection_name]
 
-async def close_database():
+def get_collection_sync(collection_name: str):
+    """Get MongoDB collection (synchronous)"""
+    db = get_database()
+    return db[collection_name]
+
+def close_database():
     """Close database connection"""
     global _client
     if _client:
