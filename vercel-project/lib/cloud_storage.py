@@ -85,6 +85,9 @@ class CloudStorageService:
     def download_file_sync(self, file_url: str) -> bytes:
         """Download file from R2 (synchronous)"""
         try:
+            if not self.client:
+                raise Exception("R2 client not initialized - check credentials")
+                
             # Extract file path from URL
             file_path = file_url.replace(f"{self.r2_endpoint}/", "")
             
