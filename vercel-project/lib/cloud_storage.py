@@ -47,6 +47,9 @@ class CloudStorageService:
                         folder: str, filename: str, content_type: str) -> str:
         """Upload file to Cloudflare R2 (synchronous)"""
         try:
+            if not self.client:
+                raise Exception("R2 client not initialized - check credentials")
+                
             # Create structured path
             file_path = f"users/{user_id}/projects/{project_id}/{folder}/{filename}"
             
