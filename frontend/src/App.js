@@ -223,11 +223,13 @@ const ChatInterface = ({ projectId, onPlanUpdate }) => {
   );
 };
 
-// Main App Component
-const App = () => {
+// Main App Component (wrapped with auth)
+const AppContent = () => {
+  const { isAuthenticated, user, getAuthenticatedAxios } = useAuth();
+  const [showLogin, setShowLogin] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
   const [currentStep, setCurrentStep] = useState('upload');
   const [projectId, setProjectId] = useState(null);
-  const [userId] = useState('user123'); // Simple user ID for now
   const [files, setFiles] = useState({
     sample: null,
     character: null,
@@ -242,28 +244,30 @@ const App = () => {
   });
   const [selectedModel, setSelectedModel] = useState('runwayml_gen4');
 
-  // Create project on component mount
+  // Create project on component mount (only when authenticated)
   useEffect(() => {
+    if (!isAuthenticated) return;
+
     const createProject = async () => {
       try {
-        const response = await axios.post(`${API}/projects`, {
-          user_id: userId
-        });
+        const axiosInstance = getAuthenticatedAxios();
+        const response = await axiosInstance.post(`${API}/projects`, {});
         setProjectId(response.data.id);
       } catch (error) {
         console.error('Failed to create project:', error);
       }
     };
     createProject();
-  }, [userId]);
+  }, [isAuthenticated, getAuthenticatedAxios]);
 
-  // Poll for status updates
+  // Poll for status updates (only when authenticated and project exists)
   useEffect(() => {
-    if (!projectId) return;
+    if (!projectId || !isAuthenticated) return;
 
     const pollStatus = async () => {
       try {
-        const response = await axios.get(`${API}/projects/${projectId}/status`);
+        const axiosInstance = getAuthenticatedAxios();
+        const response = await axiosInstance.get(`${API}/projects/${projectId}/status`);
         setVideoStatus(response.data);
       } catch (error) {
         console.error('Failed to get status:', error);
@@ -272,7 +276,7 @@ const App = () => {
 
     const interval = setInterval(pollStatus, 2000);
     return () => clearInterval(interval);
-  }, [projectId]);
+  }, [projectId, isAuthenticated, getAuthenticatedAxios]);
 
   const handleFileSelect = (file, type) => {
     setFiles(prev => ({ ...prev, [type]: file }));
@@ -282,7 +286,8 @@ const App = () => {
     const formData = new FormData();
     formData.append('file', file);
     
-    await axios.post(`${API}/projects/${projectId}/${endpoint}`, formData, {
+    const axiosInstance = getAuthenticatedAxios();
+    await axiosInstance.post(`${API}/projects/${projectId}/${endpoint}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
   };
@@ -307,7 +312,8 @@ const App = () => {
       }
 
       // Start analysis
-      const response = await axios.post(`${API}/projects/${projectId}/analyze`);
+      const axiosInstance = getAuthenticatedAxios();
+      const response = await axiosInstance.post(`${API}/projects/${projectId}/analyze`);
       setAnalysis(response.data.analysis);
       setPlan(response.data.plan);
       setCurrentStep('planning');
@@ -321,7 +327,8 @@ const App = () => {
   const handleGenerate = async () => {
     try {
       setCurrentStep('generating');
-      await axios.post(`${API}/projects/${projectId}/generate?model=${selectedModel}`);
+      const axiosInstance = getAuthenticatedAxios();
+      await axiosInstance.post(`${API}/projects/${projectId}/generate?model=${selectedModel}`);
     } catch (error) {
       console.error('Generation failed:', error);
       alert('Generation failed. Please try again.');
@@ -330,7 +337,8 @@ const App = () => {
 
   const handleDownload = async () => {
     try {
-      const response = await axios.get(`${API}/projects/${projectId}/download`);
+      const axiosInstance = getAuthenticatedAxios();
+      const response = await axiosInstance.get(`${API}/projects/${projectId}/download`);
       
       // Create download link
       const link = document.createElement('a');
@@ -342,6 +350,81 @@ const App = () => {
       alert('Download failed. Please try again.');
     }
   };
+
+  // Show authentication required message if not logged in
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+        <div className="container mx-auto px-4 py-6 md:py-8">
+          {/* Header with Auth */}
+          <div className="flex justify-between items-center mb-6 md:mb-8">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+                🎬 AI Video Generator
+              </h1>
+              <p className="text-gray-300 text-sm md:text-base">
+                Upload a sample video and let AI create a similar one for you
+              </p>
+            </div>
+            <AuthButton onLogin={() => setShowLogin(true)} />
+          </div>
+
+          {/* Authentication Required Message */}
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="bg-gray-800 rounded-lg p-8 md:p-12">
+              <div className="text-6xl mb-6">🔐</div>
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+                Sign In Required
+              </h2>
+              <p className="text-gray-300 mb-8 text-lg">
+                Please sign in to start creating amazing AI-generated videos
+              </p>
+              <div className="flex flex-col md:flex-row gap-4 justify-center">
+                <button
+                  onClick={() => setShowLogin(true)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg transition-colors font-semibold"
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => setShowRegister(true)}
+                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg transition-colors font-semibold"
+                >
+                  Create Account
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="text-center mt-8 md:mt-12 text-gray-500">
+            <p className="text-xs md:text-sm">© 2025 AI Video Generator - Create amazing videos with AI</p>
+          </div>
+        </div>
+
+        {/* Auth Modals */}
+        {showLogin && (
+          <LoginForm
+            onSwitchToRegister={() => {
+              setShowLogin(false);
+              setShowRegister(true);
+            }}
+            onClose={() => setShowLogin(false)}
+          />
+        )}
+
+        {showRegister && (
+          <RegisterForm
+            onSwitchToLogin={() => {
+              setShowRegister(false);
+              setShowLogin(true);
+            }}
+            onClose={() => setShowRegister(false)}
+          />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
