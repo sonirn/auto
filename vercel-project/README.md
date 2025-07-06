@@ -1,70 +1,189 @@
-# Getting Started with Create React App
+# AI Video Generation Platform - Vercel Deployment
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This is a complete AI-powered video generation platform converted to work on Vercel's serverless infrastructure.
 
-## Available Scripts
+## 🚀 Features
 
-In the project directory, you can run:
+- **Video Analysis**: AI-powered video analysis using Groq LLM
+- **Video Generation**: Multiple AI models (RunwayML Gen 4/3, Google Veo)
+- **Chat Interface**: AI-powered plan modifications
+- **Cloud Storage**: Cloudflare R2 integration for file storage
+- **Modern UI**: React with Tailwind CSS
+- **Serverless**: Fully serverless using Vercel Functions
 
-### `npm start`
+## 📁 Project Structure
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+```
+/
+├── api/                    # Vercel serverless functions
+│   ├── projects.py         # Project management
+│   ├── upload-sample.py    # Video upload
+│   ├── upload-character.py # Character image upload
+│   ├── upload-audio.py     # Audio upload
+│   ├── analyze.py          # Video analysis
+│   ├── chat.py             # AI chat interface
+│   ├── generate.py         # Video generation
+│   ├── status.py          # Project status
+│   ├── download.py         # Video download
+│   └── project-details.py  # Project details
+├── lib/                    # Shared utilities
+│   ├── database.py         # MongoDB integration
+│   ├── cloud_storage.py    # Cloudflare R2 storage
+│   ├── video_analysis.py   # Video analysis service
+│   ├── video_generation.py # Video generation service
+│   └── auth.py             # Authentication service
+├── src/                    # React frontend
+├── public/                 # Static assets
+├── vercel.json             # Vercel configuration
+├── requirements.txt        # Python dependencies
+└── package.json            # Node.js dependencies
+```
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 🔧 Environment Variables
 
-### `npm test`
+Set these environment variables in your Vercel dashboard:
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Database
+- `MONGO_URL` - MongoDB connection string
+- `DB_NAME` - MongoDB database name
 
-### `npm run build`
+### AI Services
+- `GROQ_API_KEY` - Groq API key for video analysis
+- `RUNWAYML_API_KEY` - RunwayML API key for video generation
+- `GEMINI_API_KEY` - Google Gemini API key
+- `ELEVENLABS_API_KEY` - ElevenLabs API key (optional)
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Authentication
+- `SUPABASE_URL` - Supabase project URL
+- `SUPABASE_KEY` - Supabase anon key
+- `SUPABASE_JWT_SECRET` - Supabase JWT secret
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Cloud Storage
+- `CLOUDFLARE_ACCOUNT_ID` - Cloudflare account ID
+- `CLOUDFLARE_R2_ENDPOINT` - R2 endpoint URL
+- `R2_ACCESS_KEY_ID` - R2 access key ID
+- `R2_SECRET_ACCESS_KEY` - R2 secret access key
+- `R2_BUCKET_NAME` - R2 bucket name
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## 🚀 Deployment Steps
 
-### `npm run eject`
+1. **Fork or Clone this repository**
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+2. **Connect to Vercel**
+   ```bash
+   npm install -g vercel
+   vercel login
+   vercel --prod
+   ```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+3. **Set Environment Variables**
+   - Go to your Vercel dashboard
+   - Navigate to Settings > Environment Variables
+   - Add all the required environment variables listed above
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+4. **Deploy**
+   ```bash
+   vercel --prod
+   ```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## 📱 API Endpoints
 
-## Learn More
+All API endpoints are available at `/api/`:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+- `POST /api/projects` - Create new project
+- `GET /api/projects` - List user projects
+- `DELETE /api/projects?project_id=<id>` - Delete project
+- `POST /api/upload-sample` - Upload sample video
+- `POST /api/upload-character` - Upload character image
+- `POST /api/upload-audio` - Upload audio file
+- `POST /api/analyze` - Analyze video and create plan
+- `POST /api/chat` - Chat with AI for plan modifications
+- `POST /api/generate` - Start video generation
+- `GET /api/status` - Get project status
+- `GET /api/project-details` - Get project details
+- `GET /api/download` - Download generated video
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 🔐 Authentication
 
-### Code Splitting
+The platform supports:
+- Supabase authentication (production)
+- Fallback authentication (development)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## 💾 Storage
 
-### Analyzing the Bundle Size
+Files are stored in Cloudflare R2 with:
+- 7-day automatic expiration
+- Structured organization: `users/{user_id}/projects/{project_id}/`
+- Secure S3-compatible API access
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## 🎥 Video Generation Models
 
-### Making a Progressive Web App
+Supported AI models:
+- **RunwayML Gen 4 Turbo** (fastest, latest)
+- **RunwayML Gen 3 Alpha** (stable, reliable)
+- **Google Veo 2** (placeholder - implementation needed)
+- **Google Veo 3** (placeholder - implementation needed)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## 🔄 Workflow
 
-### Advanced Configuration
+1. **Upload**: Sample video, character image (optional), audio (optional)
+2. **Analysis**: AI analyzes video and creates generation plan
+3. **Chat**: Modify plan through AI chat interface
+4. **Generate**: Select AI model and start generation
+5. **Download**: Get generated video as base64
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## 🛠️ Development
 
-### Deployment
+To run locally:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+```bash
+# Install dependencies
+yarn install
 
-### `npm run build` fails to minify
+# Start development server
+yarn start
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+# For API testing, you'll need to set up Vercel CLI
+vercel dev
+```
+
+## 📊 Features Status
+
+### ✅ Implemented
+- Complete video upload system
+- AI video analysis with Groq
+- Interactive chat interface
+- Video generation with RunwayML
+- Cloud storage with Cloudflare R2
+- Modern responsive UI
+- Serverless architecture
+
+### 🚧 To Be Implemented
+- Google Veo integration
+- ElevenLabs voice generation
+- Multi-clip video editing
+- User authentication (full Supabase)
+- Analytics dashboard
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+## 🆘 Support
+
+For issues and questions:
+1. Check the troubleshooting section
+2. Search existing issues
+3. Create a new issue with detailed information
+
+---
+
+**Note**: This platform requires valid API keys for AI services. Make sure to obtain proper credentials before deployment.
