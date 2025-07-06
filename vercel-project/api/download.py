@@ -88,17 +88,8 @@ def handler(request):
                 'body': json.dumps({'error': 'No generated video available'})
             }
         
-        # Download video from cloud storage (async call in sync context)
-        import asyncio
-        try:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            
-            video_content = loop.run_until_complete(
-                cloud_storage_service.download_file(video_path)
-            )
-        finally:
-            loop.close()
+        # Download video from cloud storage
+        video_content = cloud_storage_service.download_file_sync(video_path)
         
         # Convert to base64 for JSON response
         video_base64 = base64.b64encode(video_content).decode()
