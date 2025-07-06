@@ -1,5 +1,5 @@
 {
-  "name": "frontend",
+  "name": "ai-video-generation-vercel",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
