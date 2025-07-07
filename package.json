@@ -1,0 +1,34 @@
+{
+  "name": "ai-video-generation-platform",
+  "version": "1.0.0",
+  "description": "AI-powered video generation platform with analysis, planning, and generation capabilities",
+  "main": "backend/server.py",
+  "scripts": {
+    "start": "./start.sh",
+    "dev": "cd backend && python server.py",
+    "install": "cd backend && pip install -r requirements.txt",
+    "test": "cd backend && python -m pytest",
+    "deploy": "railway up"
+  },
+  "keywords": [
+    "ai",
+    "video",
+    "generation",
+    "fastapi",
+    "python",
+    "railway"
+  ],
+  "author": "AI Video Generation Team",
+  "license": "MIT",
+  "engines": {
+    "python": ">=3.11"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/ai-video-generation-platform"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/ai-video-generation-platform/issues"
+  },
+  "homepage": "https://github.com/your-username/ai-video-generation-platform#readme"
+}
