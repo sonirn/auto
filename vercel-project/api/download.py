@@ -1,4 +1,4 @@
-"""Video download API endpoint for Vercel"""
+"""Video download API endpoint for Vercel with PostgreSQL"""
 import json
 import sys
 import os
@@ -36,7 +36,7 @@ def handler(request):
         # Import here to avoid top-level imports
         sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lib'))
         
-        from database import get_collection_sync
+        from database import ProjectOperations
         from auth import auth_service
         from cloud_storage import cloud_storage_service
         
@@ -61,8 +61,7 @@ def handler(request):
             }
         
         # Get project from database
-        collection = get_collection_sync('video_projects')
-        project = collection.find_one({"_id": project_id, "user_id": user_id})
+        project = ProjectOperations.get_project(project_id, user_id)
         
         if not project:
             return {
@@ -95,10 +94,9 @@ def handler(request):
         video_base64 = base64.b64encode(video_content).decode()
         
         # Update download count
-        collection.update_one(
-            {"_id": project_id},
-            {"$inc": {"download_count": 1}}
-        )
+        ProjectOperations.update_project(project_id, {
+            "download_count": project.get('download_count', 0) + 1
+        })
         
         return {
             'statusCode': 200,

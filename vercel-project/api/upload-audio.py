@@ -1,4 +1,4 @@
-"""Audio upload API endpoint for Vercel"""
+"""Audio upload API endpoint for Vercel with PostgreSQL"""
 import json
 import base64
 import sys
@@ -38,7 +38,7 @@ def handler(request):
         # Import here to avoid top-level imports
         sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lib'))
         
-        from database import get_collection_sync
+        from database import ProjectOperations
         from auth import auth_service
         from cloud_storage import cloud_storage_service
         
@@ -92,13 +92,13 @@ def handler(request):
                 'body': json.dumps({'error': 'Invalid file type. Only audio files are allowed.'})
             }
         
-        # Validate file size (max 25MB)
-        max_size = 25 * 1024 * 1024  # 25MB
+        # Validate file size (max 50MB)
+        max_size = 50 * 1024 * 1024  # 50MB
         if len(file_data) > max_size:
             return {
                 'statusCode': 400,
                 'headers': cors_headers,
-                'body': json.dumps({'error': 'File too large. Maximum size is 25MB.'})
+                'body': json.dumps({'error': 'File too large. Maximum size is 50MB.'})
             }
         
         # Upload to cloud storage
@@ -112,18 +112,11 @@ def handler(request):
         )
         
         # Update project in database
-        collection = get_collection_sync('video_projects')
-        update_data = {
-            "audio_path": file_url,
-            "updated_at": datetime.utcnow().isoformat()
-        }
+        success = ProjectOperations.update_project(project_id, {
+            "audio_path": file_url
+        })
         
-        result = collection.update_one(
-            {"_id": project_id, "user_id": user_id},
-            {"$set": update_data}
-        )
-        
-        if result.matched_count == 0:
+        if not success:
             return {
                 'statusCode': 404,
                 'headers': cors_headers,
