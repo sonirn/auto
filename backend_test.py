@@ -656,6 +656,7 @@ class BackendTest(unittest.TestCase):
         """Set up test environment"""
         create_sample_files()
         self.project_id = None
+        self.user_id = None
         print(f"Using test user ID: {TEST_USER_ID}")
     
     def test_01_create_project(self):
