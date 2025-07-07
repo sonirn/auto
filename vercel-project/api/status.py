@@ -1,4 +1,4 @@
-"""Project status API endpoint for Vercel"""
+"""Project status API endpoint for Vercel with PostgreSQL"""
 import json
 import sys
 import os
@@ -35,7 +35,7 @@ def handler(request):
         # Import here to avoid top-level imports
         sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lib'))
         
-        from database import get_collection_sync
+        from database import ProjectOperations
         from auth import auth_service
         
         # Get authorization header
@@ -59,8 +59,7 @@ def handler(request):
             }
         
         # Get project from database
-        collection = get_collection_sync('video_projects')
-        project = collection.find_one({"_id": project_id, "user_id": user_id})
+        project = ProjectOperations.get_project(project_id, user_id)
         
         if not project:
             return {
@@ -69,8 +68,9 @@ def handler(request):
                 'body': json.dumps({'error': 'Project not found'})
             }
         
-        # Convert ObjectId to string for JSON serialization
-        project['_id'] = str(project['_id'])
+        # Convert datetime objects to ISO format for JSON serialization
+        created_at = project.get('created_at')
+        updated_at = project.get('updated_at')
         
         return {
             'statusCode': 200,
@@ -78,12 +78,12 @@ def handler(request):
             'body': json.dumps({
                 "project_id": project_id,
                 "status": project.get('status', 'unknown'),
-                "progress": project.get('progress', 0.0),
+                "progress": float(project.get('progress', 0.0)),
                 "estimated_time_remaining": project.get('estimated_time_remaining', 0),
-                "created_at": project.get('created_at'),
-                "updated_at": project.get('updated_at'),
+                "created_at": created_at.isoformat() if created_at else None,
+                "updated_at": updated_at.isoformat() if updated_at else None,
                 "error_message": project.get('error_message'),
-                "selected_model": project.get('selected_model')
+                "ai_model": project.get('ai_model')
             })
         }
         

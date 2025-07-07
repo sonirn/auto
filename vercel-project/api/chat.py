@@ -1,4 +1,4 @@
-"""Chat API endpoint for Vercel"""
+"""Chat API endpoint for Vercel with PostgreSQL"""
 import json
 import sys
 import os
@@ -37,7 +37,7 @@ def handler(request):
         # Import here to avoid top-level imports
         sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lib'))
         
-        from database import get_collection_sync
+        from database import ProjectOperations, ChatOperations
         from auth import auth_service
         
         # Get authorization header
@@ -70,8 +70,7 @@ def handler(request):
             }
         
         # Get project from database
-        collection = get_collection_sync('video_projects')
-        project = collection.find_one({"_id": project_id, "user_id": user_id})
+        project = ProjectOperations.get_project(project_id, user_id)
         
         if not project:
             return {
@@ -119,22 +118,8 @@ def handler(request):
         
         ai_response = response.choices[0].message.content
         
-        # Update chat history
-        chat_history = project.get('chat_history', [])
-        chat_history.append({
-            "user_message": message,
-            "ai_response": ai_response,
-            "timestamp": datetime.utcnow().isoformat()
-        })
-        
-        # Update project in database
-        collection.update_one(
-            {"_id": project_id},
-            {"$set": {
-                "chat_history": chat_history,
-                "updated_at": datetime.utcnow().isoformat()
-            }}
-        )
+        # Save chat message to database
+        ChatOperations.save_chat_message(project_id, user_id, message, ai_response)
         
         return {
             'statusCode': 200,
