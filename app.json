@@ -1,0 +1,29 @@
+{
+  "name": "ai-video-generation-platform",
+  "version": "1.0.0",
+  "description": "AI-powered video generation platform",
+  "main": "backend/server.py",
+  "directories": {
+    "backend": "./backend"
+  },
+  "buildpacks": [
+    "heroku/python"
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "env": {
+    "PYTHON_VERSION": {
+      "description": "Python version",
+      "value": "3.11"
+    }
+  },
+  "scripts": {
+    "build": "cd backend && pip install -r requirements.txt",
+    "start": "cd backend && gunicorn server:app --worker-class uvicorn.workers.UvicornWorker --workers 4 --bind 0.0.0.0:$PORT --timeout 120",
+    "dev": "cd backend && python server.py"
+  }
+}
