@@ -2,7 +2,7 @@
 import os
 import sys
 import uuid
-import requests
+import subprocess
 import json
 from datetime import datetime
 
@@ -10,38 +10,99 @@ from datetime import datetime
 BACKEND_URL = "https://cf243ac4-bbe4-47e1-890a-76bc95d374a8.preview.emergentagent.com"
 API_URL = f"{BACKEND_URL}/api"
 
+def curl_get(url):
+    """Execute a curl GET request"""
+    cmd = ["curl", "-s", url]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    
+    if result.returncode != 0:
+        print(f"Curl command failed: {result.stderr}")
+        return None
+    
+    try:
+        return json.loads(result.stdout)
+    except json.JSONDecodeError:
+        print(f"Failed to parse JSON response: {result.stdout}")
+        return {"raw_response": result.stdout}
+
+def curl_post(url, json_data=None, params=None):
+    """Execute a curl POST request with JSON data"""
+    cmd = ["curl", "-s", "-X", "POST"]
+    
+    # Add headers
+    cmd.extend(["-H", "Content-Type: application/json"])
+    
+    # Add JSON data
+    if json_data:
+        cmd.extend(["-d", json.dumps(json_data)])
+    
+    # Add query parameters
+    if params:
+        param_str = "&".join([f"{k}={v}" for k, v in params.items()])
+        url = f"{url}?{param_str}"
+    
+    # Add URL
+    cmd.append(url)
+    
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    
+    if result.returncode != 0:
+        print(f"Curl command failed: {result.stderr}")
+        return None
+    
+    try:
+        return json.loads(result.stdout)
+    except json.JSONDecodeError:
+        print(f"Failed to parse JSON response: {result.stdout}")
+        return {"raw_response": result.stdout}
+
+def curl_upload_file(url, file_path, file_type):
+    """Execute a curl POST request with file upload"""
+    cmd = [
+        "curl", "-s", "-X", "POST", 
+        url,
+        "-F", f"file=@{file_path};type={file_type}"
+    ]
+    
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    
+    if result.returncode != 0:
+        print(f"Curl command failed: {result.stderr}")
+        return None
+    
+    try:
+        return json.loads(result.stdout)
+    except json.JSONDecodeError:
+        print(f"Failed to parse JSON response: {result.stdout}")
+        return {"raw_response": result.stdout}
+
 def test_database_status():
     """Test the database status endpoint"""
     url = f"{API_URL}/database/status"
-    response = requests.get(url)
-    print(f"Database status: {response.json()}")
-    return response.json().get('available', False)
+    response = curl_get(url)
+    print(f"Database status: {response}")
+    return response.get('available', False)
 
 def test_storage_status():
     """Test the storage status endpoint"""
     url = f"{API_URL}/storage/status"
-    response = requests.get(url)
-    print(f"Storage status: {response.json()}")
-    return response.json().get('available', False)
+    response = curl_get(url)
+    print(f"Storage status: {response}")
+    return response.get('available', False)
 
 def test_project_creation():
     """Test project creation with the default user ID"""
     url = f"{API_URL}/projects"
     payload = {"user_id": "00000000-0000-0000-0000-000000000001"}
     
-    try:
-        response = requests.post(url, json=payload)
-        if response.status_code == 200:
-            data = response.json()
-            print(f"Created project with ID: {data['id']}")
-            print(f"Project user_id: {data['user_id']}")
-            return data['id']
-        else:
-            print(f"Project creation failed with status code: {response.status_code}")
-            print(f"Response: {response.text}")
-            return None
-    except Exception as e:
-        print(f"Error creating project: {str(e)}")
+    response = curl_post(url, payload)
+    
+    if response and 'id' in response:
+        print(f"Created project with ID: {response['id']}")
+        print(f"Project user_id: {response['user_id']}")
+        return response['id']
+    else:
+        print(f"Project creation failed: {response}")
         return None
 
 def test_file_uploads(project_id):
@@ -66,36 +127,18 @@ def test_file_uploads(project_id):
     
     # Test video upload
     video_url = f"{API_URL}/projects/{project_id}/upload-sample"
-    files = {'file': ('sample.mp4', open(sample_video_path, 'rb'), 'video/mp4')}
-    
-    try:
-        response = requests.post(video_url, files=files)
-        print(f"Video upload response: {response.status_code}")
-        print(f"Response: {response.text}")
-    except Exception as e:
-        print(f"Error uploading video: {str(e)}")
+    video_response = curl_upload_file(video_url, sample_video_path, 'video/mp4')
+    print(f"Video upload response: {video_response}")
     
     # Test image upload
     image_url = f"{API_URL}/projects/{project_id}/upload-character"
-    files = {'file': ('sample.jpg', open(sample_image_path, 'rb'), 'image/jpeg')}
-    
-    try:
-        response = requests.post(image_url, files=files)
-        print(f"Image upload response: {response.status_code}")
-        print(f"Response: {response.text}")
-    except Exception as e:
-        print(f"Error uploading image: {str(e)}")
+    image_response = curl_upload_file(image_url, sample_image_path, 'image/jpeg')
+    print(f"Image upload response: {image_response}")
     
     # Test audio upload
     audio_url = f"{API_URL}/projects/{project_id}/upload-audio"
-    files = {'file': ('sample.mp3', open(sample_audio_path, 'rb'), 'audio/mpeg')}
-    
-    try:
-        response = requests.post(audio_url, files=files)
-        print(f"Audio upload response: {response.status_code}")
-        print(f"Response: {response.text}")
-    except Exception as e:
-        print(f"Error uploading audio: {str(e)}")
+    audio_response = curl_upload_file(audio_url, sample_audio_path, 'audio/mpeg')
+    print(f"Audio upload response: {audio_response}")
     
     return True
 
@@ -106,15 +149,9 @@ def test_video_analysis(project_id):
         return False
     
     url = f"{API_URL}/projects/{project_id}/analyze"
-    
-    try:
-        response = requests.post(url)
-        print(f"Video analysis response: {response.status_code}")
-        print(f"Response: {response.text}")
-        return True
-    except Exception as e:
-        print(f"Error analyzing video: {str(e)}")
-        return False
+    response = curl_post(url)
+    print(f"Video analysis response: {response}")
+    return True
 
 def test_chat_interface(project_id):
     """Test chat interface for a project"""
@@ -129,14 +166,9 @@ def test_chat_interface(project_id):
         "user_id": "00000000-0000-0000-0000-000000000001"
     }
     
-    try:
-        response = requests.post(url, json=payload)
-        print(f"Chat interface response: {response.status_code}")
-        print(f"Response: {response.text}")
-        return True
-    except Exception as e:
-        print(f"Error in chat interface: {str(e)}")
-        return False
+    response = curl_post(url, payload)
+    print(f"Chat interface response: {response}")
+    return True
 
 def test_video_generation(project_id):
     """Test video generation for a project"""
@@ -147,14 +179,9 @@ def test_video_generation(project_id):
     url = f"{API_URL}/projects/{project_id}/generate"
     params = {"model": "runwayml_gen4"}
     
-    try:
-        response = requests.post(url, params=params)
-        print(f"Video generation response: {response.status_code}")
-        print(f"Response: {response.text}")
-        return True
-    except Exception as e:
-        print(f"Error generating video: {str(e)}")
-        return False
+    response = curl_post(url, params=params)
+    print(f"Video generation response: {response}")
+    return True
 
 def test_project_status(project_id):
     """Test project status for a project"""
@@ -163,15 +190,9 @@ def test_project_status(project_id):
         return False
     
     url = f"{API_URL}/projects/{project_id}/status"
-    
-    try:
-        response = requests.get(url)
-        print(f"Project status response: {response.status_code}")
-        print(f"Response: {response.text}")
-        return True
-    except Exception as e:
-        print(f"Error getting project status: {str(e)}")
-        return False
+    response = curl_get(url)
+    print(f"Project status response: {response}")
+    return True
 
 def test_project_details(project_id):
     """Test project details for a project"""
@@ -180,15 +201,9 @@ def test_project_details(project_id):
         return False
     
     url = f"{API_URL}/projects/{project_id}"
-    
-    try:
-        response = requests.get(url)
-        print(f"Project details response: {response.status_code}")
-        print(f"Response: {response.text}")
-        return True
-    except Exception as e:
-        print(f"Error getting project details: {str(e)}")
-        return False
+    response = curl_get(url)
+    print(f"Project details response: {response}")
+    return True
 
 def test_video_download(project_id):
     """Test video download for a project"""
@@ -197,15 +212,9 @@ def test_video_download(project_id):
         return False
     
     url = f"{API_URL}/projects/{project_id}/download"
-    
-    try:
-        response = requests.get(url)
-        print(f"Video download response: {response.status_code}")
-        print(f"Response: {response.text[:200]}...")  # Truncate long responses
-        return True
-    except Exception as e:
-        print(f"Error downloading video: {str(e)}")
-        return False
+    response = curl_get(url)
+    print(f"Video download response: {response}")
+    return True
 
 def run_all_tests():
     """Run all tests"""
