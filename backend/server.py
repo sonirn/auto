@@ -42,11 +42,11 @@ except ImportError:
     # Create fallback auth functions
     def get_current_user() -> Optional[str]:
         """Fallback: return a default user ID when auth is not available"""
-        return "default_user"
+        return "00000000-0000-0000-0000-000000000001"  # Valid UUID format
     
     def require_auth() -> str:
         """Fallback: return a default user ID when auth is not available"""
-        return "default_user"
+        return "00000000-0000-0000-0000-000000000001"  # Valid UUID format
 
 # Load cloud storage after environment variables are set
 CLOUD_STORAGE_AVAILABLE = False
