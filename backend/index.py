@@ -1,7 +1,7 @@
 """
-Vercel entry point for FastAPI application
+Vercel entry point for FastAPI application - Minimal Version
 """
-from server import app
+from server_minimal import app
 
 # This is what Vercel will use as the ASGI application
-# The app instance is imported from server.py
+# The app instance is imported from server_minimal.py
