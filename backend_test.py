@@ -748,6 +748,14 @@ class BackendTest(unittest.TestCase):
             try:
                 data = json.loads(result.stdout)
                 print(f"Upload response: {data}")
+                
+                # Check if there's an error message
+                if 'detail' in data:
+                    print(f"Error: {data['detail']}")
+                    if 'Project not found' in data.get('detail', ''):
+                        print("This is expected if project creation failed")
+                    return False
+                
                 print("✅ Sample video upload API works")
                 return True
             except json.JSONDecodeError:
