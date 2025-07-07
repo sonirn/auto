@@ -19,6 +19,7 @@ import tempfile
 import asyncio
 import json
 import cv2
+CV2_AVAILABLE = True
 import base64
 try:
     from moviepy.editor import VideoFileClip
