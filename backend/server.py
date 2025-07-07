@@ -1139,6 +1139,7 @@ app.add_middleware(
 async def startup_event():
     """Initialize services on startup"""
     initialize_cloud_storage()
+    init_database()  # Initialize PostgreSQL database
 
 @app.on_event("shutdown")
 async def shutdown_event():
