@@ -1,7 +1,7 @@
 """
-Vercel entry point for FastAPI application - Minimal Version
+Railway entry point for FastAPI application - Full Featured
 """
-from server_minimal import app
+from server import app
 
-# This is what Vercel will use as the ASGI application
-# The app instance is imported from server_minimal.py
+# This is what Railway will use as the ASGI application
+# The app instance is imported from server.py with full functionality
