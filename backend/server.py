@@ -604,6 +604,31 @@ async def get_storage_status():
             "error": str(e)
         }
 
+@api_router.get("/database/status")
+async def get_database_status():
+    """Get database connection status"""
+    try:
+        from database import get_connection, get_cursor
+        conn = get_connection()
+        cursor = get_cursor()
+        cursor.execute("SELECT version(), current_database(), current_user")
+        result = cursor.fetchone()
+        cursor.close()
+        return {
+            "available": True,
+            "database_info": {
+                "version": result[0],
+                "database": result[1],
+                "user": result[2],
+                "status": "connected"
+            }
+        }
+    except Exception as e:
+        return {
+            "available": False,
+            "error": str(e)
+        }
+
 # Authentication Routes
 @api_router.post("/auth/register")
 async def register_user(auth_request: AuthRequest):
