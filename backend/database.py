@@ -319,10 +319,11 @@ class MockDatabase:
         return MongoCollection('users')
 
 # Initialize database and create mock client for compatibility
-try:
-    init_database()
-except Exception as e:
-    logger.warning(f"Database initialization failed: {e}")
+# Note: Database initialization is now handled in server.py startup event
+# try:
+#     init_database()
+# except Exception as e:
+#     logger.warning(f"Database initialization failed: {e}")
 
 # Create mock MongoDB-compatible interface
 db = MockDatabase()
