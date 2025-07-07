@@ -7,7 +7,15 @@ cd backend
 export PORT=${PORT:-8001}
 
 echo "Starting AI Video Generation Platform on port $PORT..."
+echo "Working directory: $(pwd)"
 echo "Environment: $(printenv | grep -E '^(DATABASE_URL|GROQ_API_KEY|CLOUDFLARE_ACCOUNT_ID)=' | wc -l) environment variables loaded"
+
+# Check if requirements are installed
+if [ ! -f "server.py" ]; then
+    echo "Error: server.py not found in $(pwd)"
+    ls -la
+    exit 1
+fi
 
 # Start the server with production settings
 exec gunicorn server:app \
