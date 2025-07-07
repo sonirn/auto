@@ -662,26 +662,45 @@ class BackendTest(unittest.TestCase):
         """Test project creation API"""
         print("\n=== Testing Project Creation API ===")
         
-        url = f"{API_URL}/projects"
-        payload = {"user_id": TEST_USER_ID}
+        # First, create a user in the database
+        print("Creating a test user first...")
+        user_url = f"{API_URL}/auth/register"
+        user_payload = {
+            "email": f"test_user_{uuid.uuid4().hex[:8]}@example.com",
+            "password": "Test@Password123"
+        }
         
         try:
+            # Try to register a user first
+            user_response = requests.post(user_url, json=user_payload)
+            if user_response.status_code == 200:
+                user_data = user_response.json()
+                user_id = user_data["user"]["id"]
+                print(f"Created test user with ID: {user_id}")
+            else:
+                # If registration fails, use the default UUID format
+                user_id = "00000000-0000-0000-0000-000000000001"
+                print(f"Using default user ID: {user_id}")
+            
+            # Now create the project
+            url = f"{API_URL}/projects"
+            payload = {"user_id": user_id}
+            
             response = requests.post(url, json=payload)
             response.raise_for_status()
             data = response.json()
             
             self.assertIn("id", data, "Project ID not found in response")
-            # The backend is using the default_user from the fallback auth function
-            # So we should check if user_id exists but not enforce a specific value
             self.assertIn("user_id", data, "User ID not found in response")
             
             self.project_id = data["id"]
             print(f"Created project with ID: {self.project_id}")
-            print(f"Project user_id: {data['user_id']} (using fallback auth)")
+            print(f"Project user_id: {data['user_id']}")
             print("✅ Project creation API works")
             
             # Store project ID for other tests
             BackendTest.project_id = self.project_id
+            BackendTest.user_id = data["user_id"]  # Store the user ID for other tests
             return True
         except Exception as e:
             print(f"❌ Project creation API failed: {str(e)}")
