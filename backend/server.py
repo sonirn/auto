@@ -1144,8 +1144,9 @@ async def startup_event():
     initialize_cloud_storage()
 
 @app.on_event("shutdown")
-async def shutdown_db_client():
-    client.close()
+async def shutdown_event():
+    """Cleanup on shutdown"""
+    pass
 
 if __name__ == "__main__":
     import uvicorn
