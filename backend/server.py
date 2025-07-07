@@ -18,8 +18,12 @@ import aiofiles
 import tempfile
 import asyncio
 import json
-import cv2
-CV2_AVAILABLE = True
+try:
+    import cv2
+    CV2_AVAILABLE = True
+except ImportError:
+    CV2_AVAILABLE = False
+    logging.warning("opencv-python not available, video metadata extraction will be limited")
 import base64
 try:
     from moviepy.editor import VideoFileClip
