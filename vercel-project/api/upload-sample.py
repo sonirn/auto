@@ -1,4 +1,4 @@
-"""Sample video upload API endpoint for Vercel"""
+"""Sample video upload API endpoint for Vercel with PostgreSQL"""
 import json
 import base64
 import sys
@@ -38,7 +38,7 @@ def handler(request):
         # Import here to avoid top-level imports
         sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lib'))
         
-        from database import get_collection_sync
+        from database import ProjectOperations
         from auth import auth_service
         from cloud_storage import cloud_storage_service
         
@@ -112,18 +112,11 @@ def handler(request):
         )
         
         # Update project in database
-        collection = get_collection_sync('video_projects')
-        update_data = {
-            "sample_video_path": file_url,
-            "updated_at": datetime.utcnow().isoformat()
-        }
+        success = ProjectOperations.update_project(project_id, {
+            "sample_video_path": file_url
+        })
         
-        result = collection.update_one(
-            {"_id": project_id, "user_id": user_id},
-            {"$set": update_data}
-        )
-        
-        if result.matched_count == 0:
+        if not success:
             return {
                 'statusCode': 404,
                 'headers': cors_headers,

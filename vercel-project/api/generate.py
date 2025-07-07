@@ -1,4 +1,4 @@
-"""Video generation API endpoint for Vercel"""
+"""Video generation API endpoint for Vercel with PostgreSQL"""
 import json
 import sys
 import os
@@ -37,7 +37,7 @@ def handler(request):
         # Import here to avoid top-level imports
         sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lib'))
         
-        from database import get_collection_sync, PROJECT_STATUS
+        from database import ProjectOperations, PROJECT_STATUS
         from auth import auth_service
         from video_generation import VideoGenerationService, VideoModel
         
@@ -64,8 +64,7 @@ def handler(request):
             }
         
         # Get project from database
-        collection = get_collection_sync('video_projects')
-        project = collection.find_one({"_id": project_id, "user_id": user_id})
+        project = ProjectOperations.get_project(project_id, user_id)
         
         if not project:
             return {
@@ -84,15 +83,12 @@ def handler(request):
             }
         
         # Update project status
-        collection.update_one(
-            {"_id": project_id},
-            {"$set": {
-                "status": PROJECT_STATUS["GENERATING"],
-                "progress": 60.0,
-                "selected_model": selected_model,
-                "updated_at": datetime.utcnow().isoformat()
-            }}
-        )
+        ProjectOperations.update_project(project_id, {
+            "status": PROJECT_STATUS["GENERATING"],
+            "progress": 60.0,
+            "ai_model": selected_model,
+            "generation_started_at": datetime.utcnow().isoformat()
+        })
         
         # Initialize video generation service
         generation_service = VideoGenerationService()
@@ -127,15 +123,11 @@ def handler(request):
         update_data = {
             "status": PROJECT_STATUS["PROCESSING"],
             "progress": 70.0,
-            "generation_id": generation_result.get('generation_id'),
-            "estimated_time_remaining": generation_result.get('estimated_time', 120),
-            "updated_at": datetime.utcnow().isoformat()
+            "generation_job_id": generation_result.get('generation_id'),
+            "estimated_time_remaining": generation_result.get('estimated_time', 120)
         }
         
-        collection.update_one(
-            {"_id": project_id},
-            {"$set": update_data}
-        )
+        ProjectOperations.update_project(project_id, update_data)
         
         return {
             'statusCode': 200,
