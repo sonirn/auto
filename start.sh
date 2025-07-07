@@ -1,15 +1,24 @@
 #!/bin/bash
 
-# Start script for Railway deployment
-cd /app/backend
+# Railway deployment start script
+cd backend
 
 # Set default port if not provided
 export PORT=${PORT:-8001}
 
-# Initialize database
-echo "Initializing database..."
-python -c "from database import init_database; init_database()"
+echo "Starting AI Video Generation Platform on port $PORT..."
+echo "Environment: $(printenv | grep -E '^(DATABASE_URL|GROQ_API_KEY|CLOUDFLARE_ACCOUNT_ID)=' | wc -l) environment variables loaded"
 
-# Start the server
-echo "Starting server on port $PORT..."
-exec gunicorn server:app -w 4 -k uvicorn.workers.UvicornWorker --host 0.0.0.0 --port $PORT --timeout 120 --keep-alive 2 --max-requests 1000 --max-requests-jitter 50 --preload
+# Start the server with production settings
+exec gunicorn server:app \
+  --worker-class uvicorn.workers.UvicornWorker \
+  --workers 4 \
+  --bind 0.0.0.0:$PORT \
+  --timeout 120 \
+  --keep-alive 2 \
+  --max-requests 1000 \
+  --max-requests-jitter 50 \
+  --access-logfile - \
+  --error-logfile - \
+  --log-level info \
+  --preload
