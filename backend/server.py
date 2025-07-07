@@ -609,6 +609,15 @@ async def get_database_status():
     """Get database connection status"""
     try:
         from database import get_connection, get_cursor
+        
+        # Check if DATABASE_URL is set
+        database_url = os.environ.get('DATABASE_URL')
+        if not database_url:
+            return {
+                "available": False,
+                "error": "DATABASE_URL environment variable not set"
+            }
+        
         conn = get_connection()
         cursor = get_cursor()
         cursor.execute("SELECT version(), current_database(), current_user")
@@ -624,9 +633,11 @@ async def get_database_status():
             }
         }
     except Exception as e:
+        import traceback
         return {
             "available": False,
-            "error": str(e)
+            "error": str(e),
+            "traceback": traceback.format_exc()
         }
 
 # Authentication Routes
