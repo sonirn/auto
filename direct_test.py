@@ -7,7 +7,7 @@ import json
 from datetime import datetime
 
 # API URL
-BACKEND_URL = "https://cf243ac4-bbe4-47e1-890a-76bc95d374a8.preview.emergentagent.com"
+BACKEND_URL = "https://e7f16282-da39-498b-9a0d-26fbf5bf2dc4.preview.emergentagent.com"
 API_URL = f"{BACKEND_URL}/api"
 
 def curl_get(url):
