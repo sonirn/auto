@@ -36,7 +36,7 @@ from enum import Enum
 import litellm
 
 # Import PostgreSQL database
-from database import db
+from database import db, init_database
 
 # Import auth with fallback
 AUTH_AVAILABLE = False
