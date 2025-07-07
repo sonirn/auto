@@ -714,9 +714,11 @@ class BackendTest(unittest.TestCase):
                     print(f"Response text: {e.response.text}")
             
             # If project creation fails, still set a project ID for other tests
-            # This will allow other tests to run with the fallback auth
-            BackendTest.project_id = f"test_project_{uuid.uuid4()}"
+            # Use a valid UUID format for PostgreSQL
+            BackendTest.project_id = str(uuid.uuid4())
             BackendTest.user_id = user_id
+            
+            print(f"Using fallback project ID: {BackendTest.project_id}")
             return False
     
     def test_02_upload_sample_video(self):
