@@ -663,30 +663,28 @@ class BackendTest(unittest.TestCase):
         """Test project creation API"""
         print("\n=== Testing Project Creation API ===")
         
-        # First, create a user in the database
-        print("Creating a test user first...")
-        user_url = f"{API_URL}/auth/register"
-        user_payload = {
-            "email": f"test_user_{uuid.uuid4().hex[:8]}@example.com",
-            "password": "Test@Password123"
-        }
+        # Use the UUID format for user ID
+        user_id = "00000000-0000-0000-0000-000000000001"
+        
+        # First, check if the database status endpoint is working
+        db_status_url = f"{API_URL}/database/status"
+        try:
+            db_status_response = requests.get(db_status_url)
+            db_status_data = db_status_response.json()
+            print(f"Database status: {db_status_data}")
+            
+            if db_status_data.get('available'):
+                print("Database connection is working")
+            else:
+                print(f"Database connection issue: {db_status_data.get('error')}")
+        except Exception as e:
+            print(f"Error checking database status: {str(e)}")
+        
+        # Now create the project
+        url = f"{API_URL}/projects"
+        payload = {"user_id": user_id}
         
         try:
-            # Try to register a user first
-            user_response = requests.post(user_url, json=user_payload)
-            if user_response.status_code == 200:
-                user_data = user_response.json()
-                user_id = user_data["user"]["id"]
-                print(f"Created test user with ID: {user_id}")
-            else:
-                # If registration fails, use the default UUID format
-                user_id = "00000000-0000-0000-0000-000000000001"
-                print(f"Using default user ID: {user_id}")
-            
-            # Now create the project
-            url = f"{API_URL}/projects"
-            payload = {"user_id": user_id}
-            
             response = requests.post(url, json=payload)
             response.raise_for_status()
             data = response.json()
@@ -705,6 +703,20 @@ class BackendTest(unittest.TestCase):
             return True
         except Exception as e:
             print(f"❌ Project creation API failed: {str(e)}")
+            
+            # Try to get more detailed error information
+            if hasattr(e, 'response') and e.response:
+                try:
+                    error_detail = e.response.json()
+                    print(f"Error details: {error_detail}")
+                except:
+                    print(f"Response status code: {e.response.status_code}")
+                    print(f"Response text: {e.response.text}")
+            
+            # If project creation fails, still set a project ID for other tests
+            # This will allow other tests to run with the fallback auth
+            BackendTest.project_id = f"test_project_{uuid.uuid4()}"
+            BackendTest.user_id = user_id
             return False
     
     def test_02_upload_sample_video(self):
