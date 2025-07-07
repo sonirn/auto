@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# AI Video Generation Platform - Vercel Deployment Script
-# This script helps you deploy your AI video generation platform to Vercel
+# AI Video Generation Platform - Vercel Deployment Script (PostgreSQL Version)
+# This script helps you deploy your AI video generation platform to Vercel with Neon PostgreSQL
 
-echo "🚀 AI Video Generation Platform - Vercel Deployment"
-echo "=================================================="
+echo "🚀 AI Video Generation Platform - Vercel Deployment (PostgreSQL)"
+echo "================================================================="
 
 # Check if Vercel CLI is installed
 if ! command -v vercel &> /dev/null; then
@@ -38,20 +38,34 @@ echo "📋 Next Steps:"
 echo "1. Go to your Vercel dashboard"
 echo "2. Navigate to Settings > Environment Variables"
 echo "3. Add the required environment variables:"
-echo "   - MONGO_URL (MongoDB connection string)"
-echo "   - DB_NAME (MongoDB database name)"
+echo ""
+echo "🗄️  Database (Neon PostgreSQL):"
+echo "   - DATABASE_URL (Neon PostgreSQL connection string)"
+echo ""
+echo "🤖 AI Services:"
 echo "   - GROQ_API_KEY (Groq API key)"
-echo "   - RUNWAYML_API_KEY (RunwayML API key)"
+echo "   - RUNWAYML_API_KEY (RunwayML API key)"  
 echo "   - GEMINI_API_KEY (Google Gemini API key)"
-echo "   - SUPABASE_URL (Supabase project URL)"
-echo "   - SUPABASE_KEY (Supabase anon key)"
-echo "   - SUPABASE_JWT_SECRET (Supabase JWT secret)"
+echo "   - ELEVENLABS_API_KEY (ElevenLabs API key)"
+echo ""
+echo "☁️  Cloud Storage (Cloudflare R2):"
 echo "   - CLOUDFLARE_ACCOUNT_ID (Cloudflare account ID)"
 echo "   - CLOUDFLARE_R2_ENDPOINT (R2 endpoint URL)"
 echo "   - R2_ACCESS_KEY_ID (R2 access key ID)"
 echo "   - R2_SECRET_ACCESS_KEY (R2 secret access key)"
 echo "   - R2_BUCKET_NAME (R2 bucket name)"
 echo ""
+echo "🔐 Authentication (Stack Auth):"
+echo "   - NEXT_PUBLIC_STACK_PROJECT_ID (Stack project ID)"
+echo "   - NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY (Stack client key)"
+echo "   - STACK_SECRET_SERVER_KEY (Stack server key)"
+echo ""
 echo "4. Redeploy after setting environment variables"
 echo ""
-echo "🎉 Your AI Video Generation Platform is now live on Vercel!"
+echo "🔍 Testing URLs:"
+echo "   - Frontend: https://your-app.vercel.app"
+echo "   - API Health: https://your-app.vercel.app/api/projects"
+echo ""
+echo "🎉 Your AI Video Generation Platform is now live on Vercel with PostgreSQL!"
+echo ""
+echo "📚 For detailed documentation, see README.md"
