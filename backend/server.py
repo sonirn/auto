@@ -626,9 +626,9 @@ async def get_database_status():
         return {
             "available": True,
             "database_info": {
-                "version": result[0],
-                "database": result[1],
-                "user": result[2],
+                "version": result['version'],
+                "database": result['current_database'],
+                "user": result['current_user'],
                 "status": "connected"
             }
         }
