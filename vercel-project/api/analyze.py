@@ -1,4 +1,4 @@
-"""Video analysis API endpoint for Vercel"""
+"""Video analysis API endpoint for Vercel with PostgreSQL"""
 import json
 import sys
 import os
@@ -37,7 +37,7 @@ def handler(request):
         # Import here to avoid top-level imports
         sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lib'))
         
-        from database import get_collection_sync, PROJECT_STATUS
+        from database import ProjectOperations, PROJECT_STATUS
         from auth import auth_service
         from video_analysis import VideoAnalysisService
         
@@ -62,8 +62,7 @@ def handler(request):
             }
         
         # Get project from database
-        collection = get_collection_sync('video_projects')
-        project = collection.find_one({"_id": project_id, "user_id": user_id})
+        project = ProjectOperations.get_project(project_id, user_id)
         
         if not project:
             return {
@@ -82,14 +81,10 @@ def handler(request):
             }
         
         # Update project status
-        collection.update_one(
-            {"_id": project_id},
-            {"$set": {
-                "status": PROJECT_STATUS["ANALYZING"],
-                "progress": 10.0,
-                "updated_at": datetime.utcnow().isoformat()
-            }}
-        )
+        ProjectOperations.update_project(project_id, {
+            "status": PROJECT_STATUS["ANALYZING"],
+            "progress": 10.0
+        })
         
         # Initialize video analysis service
         analysis_service = VideoAnalysisService()
@@ -116,14 +111,10 @@ def handler(request):
             "status": PROJECT_STATUS["PLANNING"],
             "progress": 50.0,
             "video_analysis": analysis_result.get('video_analysis', {}),
-            "generation_plan": analysis_result.get('generation_plan', {}),
-            "updated_at": datetime.utcnow().isoformat()
+            "generation_plan": analysis_result.get('generation_plan', {})
         }
         
-        collection.update_one(
-            {"_id": project_id},
-            {"$set": update_data}
-        )
+        ProjectOperations.update_project(project_id, update_data)
         
         return {
             'statusCode': 200,

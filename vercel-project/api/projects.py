@@ -1,7 +1,6 @@
-"""Projects API endpoints for Vercel"""
+"""Projects API endpoints for Vercel with PostgreSQL"""
 import json
 import uuid
-import asyncio
 from datetime import datetime
 from typing import Optional
 
@@ -33,7 +32,7 @@ def handler(request):
         import os
         sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lib'))
         
-        from database import get_collection_sync, PROJECT_STATUS
+        from database import ProjectOperations, PROJECT_STATUS
         from auth import auth_service
         
         # Get authorization header
@@ -49,12 +48,15 @@ def handler(request):
         
         if method == 'GET':
             # List projects
-            collection = get_collection_sync('video_projects')
-            projects = list(collection.find({"user_id": user_id}))
+            projects = ProjectOperations.get_projects_by_user(user_id)
             
-            # Convert ObjectId to string for JSON serialization
+            # Convert UUID and datetime to string for JSON serialization
             for project in projects:
-                project['_id'] = str(project['_id'])
+                project['id'] = str(project['id'])
+                if project.get('created_at'):
+                    project['created_at'] = project['created_at'].isoformat()
+                if project.get('updated_at'):
+                    project['updated_at'] = project['updated_at'].isoformat()
             
             return {
                 'statusCode': 200,
@@ -66,7 +68,7 @@ def handler(request):
             # Create project
             project_id = str(uuid.uuid4())
             project_data = {
-                "_id": project_id,
+                "id": project_id,
                 "user_id": user_id,
                 "status": PROJECT_STATUS["UPLOADING"],
                 "created_at": datetime.utcnow().isoformat(),
@@ -76,14 +78,27 @@ def handler(request):
             }
             
             # Save to database
-            collection = get_collection_sync('video_projects')
-            collection.insert_one(project_data)
+            created_project = ProjectOperations.create_project(project_data)
             
-            return {
-                'statusCode': 201,
-                'headers': cors_headers,
-                'body': json.dumps(project_data)
-            }
+            if created_project:
+                # Convert UUID and datetime to string for JSON serialization
+                created_project['id'] = str(created_project['id'])
+                if created_project.get('created_at'):
+                    created_project['created_at'] = created_project['created_at'].isoformat()
+                if created_project.get('updated_at'):
+                    created_project['updated_at'] = created_project['updated_at'].isoformat()
+                
+                return {
+                    'statusCode': 201,
+                    'headers': cors_headers,
+                    'body': json.dumps(created_project)
+                }
+            else:
+                return {
+                    'statusCode': 500,
+                    'headers': cors_headers,
+                    'body': json.dumps({'error': 'Failed to create project'})
+                }
         
         elif method == 'DELETE':
             # Delete project - get project ID from query
@@ -95,10 +110,9 @@ def handler(request):
                     'body': json.dumps({'error': 'Project ID required'})
                 }
             
-            collection = get_collection_sync('video_projects')
-            result = collection.delete_one({"_id": project_id, "user_id": user_id})
+            success = ProjectOperations.delete_project(project_id, user_id)
             
-            if result.deleted_count == 0:
+            if not success:
                 return {
                     'statusCode': 404,
                     'headers': cors_headers,
