@@ -7,6 +7,9 @@ from datetime import datetime
 # Add the backend directory to the path
 sys.path.append('/app/backend')
 
+# Set the DATABASE_URL environment variable
+os.environ['DATABASE_URL'] = "postgres://neondb_owner:npg_2RNt5IwBXShV@ep-muddy-cell-a4gezv5f-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require"
+
 # Import the database module
 from database import db, init_database
 
