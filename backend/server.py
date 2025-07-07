@@ -327,6 +327,16 @@ Return your analysis in JSON format."""
             raise HTTPException(status_code=500, detail=f"Video analysis failed: {str(e)}")
     
     async def _extract_video_metadata(self, video_path: str) -> Dict[str, Any]:
+        if not CV2_AVAILABLE:
+            return {
+                "duration": 0,
+                "fps": 0,
+                "frame_count": 0,
+                "width": 0,
+                "height": 0,
+                "error": "OpenCV not available - video metadata extraction limited"
+            }
+            
         try:
             # Use OpenCV to extract basic metadata
             cap = cv2.VideoCapture(video_path)
