@@ -538,6 +538,7 @@ app.add_middleware(
 async def startup_event():
     """Initialize services on startup"""
     initialize_cloud_storage()
+    init_database()  # Initialize PostgreSQL database
 
 # Continue with all the existing API endpoints but adapted for PostgreSQL...
 # [Note: Due to length constraints, I'm showing the key structure. 
