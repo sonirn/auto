@@ -1,21 +1,14 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "index.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "50mb"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "index.py"
-    }
-  ],
-  "env": {
-    "PYTHON_VERSION": "3.11"
+  "name": "ai-video-generation-backend",
+  "build": {
+    "commands": [
+      "pip install --upgrade pip",
+      "pip install -r requirements.txt"
+    ]
+  },
+  "deploy": {
+    "startCommand": "uvicorn server:app --host 0.0.0.0 --port $PORT",
+    "restartPolicyType": "on-failure"
   }
 }
